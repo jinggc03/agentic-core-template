@@ -1,0 +1,41 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "personal-agent-runtime"
+version = "0.1.0"
+description = "Personal agent runtime - agentic-core-template compatible with agentic-cowork-hub"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+  "pydantic>=2,<3",
+  "pydantic-settings>=2,<3",
+  "python-dotenv>=1,<2",
+  "pyyaml>=6,<7",
+  "fastapi>=0.115,<1",
+  "uvicorn>=0.30,<1",
+  "aiohttp>=3.9,<4",
+]
+
+[project.optional-dependencies]
+dev = [
+  "mypy>=1,<2",
+  "ruff>=0.9,<1",
+  "pytest>=8,<9",
+  "pytest-asyncio>=0.24,<1",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["app*", "examples*"]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+
+[tool.mypy]
+python_version = "3.11"
+disallow_untyped_defs = false
+warn_return_any = true
+warn_unused_configs = true

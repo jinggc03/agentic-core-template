@@ -1,0 +1,33 @@
+# ═══════════════════════════════════════════════════════════════════════════
+# params/prod/params.yml
+# ═══════════════════════════════════════════════════════════════════════════
+#
+# Production environment overrides.
+# Loaded after params/base/params.yml — only values that differ from base.
+# Non-sensitive values only. Versioned in git.
+# ALL secrets MUST come from .env or system environment variables at runtime.
+# ═══════════════════════════════════════════════════════════════════════════
+
+app:
+  env: prod
+  log_level: WARNING  # base: INFO
+
+server:
+  reload: false       # base: true
+
+security:
+  api_key_enabled: true                                   # base: false
+  cors_allowed_origins: "https://your-production-domain.com"  # base: localhost
+
+integrations:
+  mcp:
+    enabled: true     # base: false
+
+features:
+  allow_agent_registration: false  # base: true — disable dynamic registration in prod
+  enable_metrics: true             # base: false
+  enable_structured_logs: true     # base: false
+
+limits:
+  agent_timeout_seconds: 30        # base: 60
+

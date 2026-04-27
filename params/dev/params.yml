@@ -1,0 +1,22 @@
+# ═══════════════════════════════════════════════════════════════════════════
+# params/dev/params.yml
+# ═══════════════════════════════════════════════════════════════════════════
+#
+# Development environment overrides.
+# Loaded after params/base/params.yml — only values that differ from base.
+# Non-sensitive values only. Versioned in git.
+# ═══════════════════════════════════════════════════════════════════════════
+
+app:
+  env: dev
+  debug: true
+  log_level: DEBUG
+
+server:
+  host: "127.0.0.1"   # bind to loopback in dev (base binds 0.0.0.0)
+
+limits:
+  max_model_calls_per_turn: 5    # base: 1
+  max_tool_calls_per_turn: 20    # base: 5
+  max_agent_turns: 1000          # base: 10
+

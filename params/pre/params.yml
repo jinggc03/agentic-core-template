@@ -1,0 +1,34 @@
+# ═══════════════════════════════════════════════════════════════════════════
+# params/pre/params.yml
+# ═══════════════════════════════════════════════════════════════════════════
+#
+# Pre-production environment overrides.
+# Loaded after params/base/params.yml — only values that differ from base.
+# Non-sensitive values only. Versioned in git.
+# Secrets (API keys, tokens) must be provided via .env or system env vars.
+# ═══════════════════════════════════════════════════════════════════════════
+
+app:
+  env: pre
+
+server:
+  reload: false       # base: true
+
+security:
+  api_key_enabled: true                              # base: false
+  cors_allowed_origins: "https://your-staging-domain.com"  # base: localhost
+
+integrations:
+  mcp:
+    enabled: true     # base: false
+
+features:
+  enable_metrics: true           # base: false
+  enable_structured_logs: true   # base: false
+
+limits:
+  max_model_calls_per_turn: 2    # base: 1
+  max_tool_calls_per_turn: 10    # base: 5
+  max_agent_turns: 500           # base: 10
+  agent_timeout_seconds: 45      # base: 60
+

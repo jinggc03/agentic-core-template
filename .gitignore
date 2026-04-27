@@ -1,0 +1,40 @@
+# Secrets file — the only .env file in the project
+.env
+
+# Legacy per-environment .env files (replaced by params/)
+.env.local
+.env.base
+.env.dev
+.env.pre
+.env.prod
+
+# params/ runtime files are git-ignored; only *.yml.example are versioned
+# params/base/params.yml, params/dev/params.yml, etc. are committed intentionally
+# because they contain no secrets. If you later add secrets to them, add here:
+# params/*/params.local.yml
+.DS_Store
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.venv/
+.venv
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.log
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DB_Store
+reports/

@@ -1,0 +1,59 @@
+# ═══════════════════════════════════════════════════════════════════════════
+# params/base/params.yml
+# ═══════════════════════════════════════════════════════════════════════════
+#
+# Base configuration — shared defaults for ALL environments.
+# Non-sensitive values only. Versioned in git.
+#
+# NEVER put secrets here (API keys, tokens, passwords, connection strings).
+# Secrets belong in .env (git-ignored).
+#
+# Loading order (lower → higher priority):
+#   1. params/base/params.yml       ← this file
+#   2. params/{APP_ENV}/params.yml  ← environment override
+#   3. .env                         ← secrets / private overrides (git-ignored)
+#   4. System environment variables ← highest priority
+# ═══════════════════════════════════════════════════════════════════════════
+
+app:
+  env: dev          # Application environment: dev | pre | prod
+  name: personal-agent-runtime
+  debug: false
+  log_level: INFO   # DEBUG | INFO | WARNING | ERROR | CRITICAL
+  log_format: standard  # standard | json
+
+server:
+  host: "0.0.0.0"
+  port: 8000
+  reload: true
+
+llm:
+  provider: openrouter   # openrouter | openai
+  model: meta-llama/llama-3.1-70b-instruct
+
+security:
+  api_key_enabled: false
+  cors_allowed_origins: "http://localhost:3000,http://localhost:8000"
+  allowed_hosts: "localhost,127.0.0.1"
+
+integrations:
+  telegram:
+    enabled: false
+  supabase:
+    enabled: false
+  mcp:
+    enabled: false
+    server_name: personal-agent-runtime
+
+features:
+  allow_agent_registration: true
+  enable_metrics: false
+  enable_structured_logs: false
+
+limits:
+  max_model_calls_per_turn: 1
+  max_tool_calls_per_turn: 5
+  max_agent_turns: 10
+  max_input_chars: 8000
+  max_output_chars: 12000
+  agent_timeout_seconds: 60
