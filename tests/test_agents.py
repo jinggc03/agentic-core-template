@@ -6,7 +6,6 @@ from fastapi.testclient import TestClient
 
 from app.main import app
 from app.agents.registry import get_registry
-from app.agents.base_agent import BaseAgent
 from app.agents.base import ConfiguredAgent
 
 
@@ -20,7 +19,7 @@ def client():
 def sample_agent():
     """Register a sample agent for testing."""
     
-    class SampleAgent(BaseAgent):
+    class SampleAgent(ConfiguredAgent):
         def __init__(self, **kwargs):
             super().__init__(
                 agent_id="sample-agent",

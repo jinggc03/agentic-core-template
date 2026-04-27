@@ -1,428 +1,298 @@
-# Personal Agent Runtime
+# Agentic Core Template
 
-**agentic-core-template** — A reusable base repository for agent development, compatible with **agentic-cowork-hub** skills and architecture.
+![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.115%2B-009688)
+![ADK-first](https://img.shields.io/badge/ADK-first-6f42c1)
+![MIT License](https://img.shields.io/badge/license-MIT-green)
+![v0.3](https://img.shields.io/badge/status-v0.3-orange)
 
-## Overview
+A reusable technical foundation for building structured, secure, and extensible AI agents with ADK-first architecture.
 
-Personal Agent Runtime provides a modular foundation for building, deploying, and managing AI agents. It enables:
+`agentic-core-template` is a backend template for creating AI agents with good practices from the start: clear runtime boundaries, portable skills, provider abstraction, MCP exposure, FastAPI endpoints, Telegram integration, environment-based configuration, and security guardrails.
 
-- **Creating ADK-style agents** with LLM provider abstraction
-- **Building and reusing skills** compatible with agentic-cowork-hub
-- **Exposing capabilities via MCP** (Model Context Protocol)
-- **Multiple LLM provider support** (OpenRouter, OpenAI)
-- **Multiple entry points** (FastAPI, CLI, Telegram)
-- **Optional Supabase/PostgreSQL integration**
+Author: Jing
+
+## Why This Exists
+
+AI agent projects often become hard to maintain when the runtime, prompts, tools, provider calls, API routes, and secrets all grow in the same layer. This template exists to avoid that early drift.
+
+It addresses common problems:
+
+- Unstructured agent implementations
+- Mixed transport, orchestration, and business logic
+- Secrets stored in source code or committed config
+- Missing execution limits and timeout guards
+- Skills that cannot be reused outside one agent
+- Direct LLM calls from routes or handlers
+- Hard-to-test integrations such as MCP and Telegram
+
+## What It Provides
+
+- ADK-first runtime built around `ConfiguredAgent` and `AgentRunner`
+- FastAPI API layer for health checks, agent execution, MCP, and Telegram
+- Portable skill system based on `BaseSkill.run(input_data: dict) -> dict`
+- MCP-ready layer for exposing tools and resources
+- Telegram bot/webhook integration with allowlist and signature checks
+- LLM provider abstraction with OpenRouter and OpenAI support
+- Layered configuration with `.env` secrets and versioned `params/` YAML
+- Security guardrails for API keys, CORS, host validation, safe logging, and limits
+- Integration tests, architecture docs, standards, and audit reports
 
 ## Architecture
 
-```
-personal-agent-runtime/
-├── app/
-│   ├── api/                    # FastAPI endpoints
-│   │   ├── routes/
-│   │   │   ├── health.py       # Health checks
-│   │   │   ├── agent.py        # Agent execution
-│   │   │   ├── mcp.py          # MCP tools
-│   │   │   └── telegram.py     # Telegram webhook
-│   │   └── deps.py             # Dependencies
-│   ├── agents/                 # ADK-style agents
-│   │   ├── base_agent.py
-│   │   └── registry.py
-│   ├── skills/                 # Skills (compatible with agentic-cowork-hub)
-│   │   ├── base/
-│   │   │   ├── skill.py        # BaseSkill interface
-│   │   │   └── registry.py     # Skill registry
-│   │   └── examples/
-│   │       ├── calculator.py
-│   │       └── text_processor.py
-│   ├── mcp/                    # MCP exposure layer
-│   │   └── tool_registry.py
-│   ├── providers/              # LLM abstraction
-│   │   ├── base.py
-│   │   ├── openrouter.py
-│   │   ├── openai.py
-│   │   └── factory.py
-│   ├── integrations/
-│   │   └── telegram/           # Telegram bot
-│   │       ├── bot.py
-│   │       ├── handlers.py
-│   │       └── schemas.py
-│   ├── core/
-│   │   ├── config.py           # Configuration management
-│   │   ├── logging.py          # Logging setup
-│   │   └── security.py         # Security utilities
-│   ├── db/
-│   │   ├── session.py          # Database session
-│   │   └── models/
-│   └── main.py                 # FastAPI app
-├── examples/
-│   └── invoice_agent/          # Example agent
-├── scripts/
-│   ├── run_api.sh
-│   ├── run_agent.sh
-│   └── run_mcp.sh
-├── tests/
-├── .env.example
-├── pyproject.toml
-├── Makefile
-└── README.md
+```text
+Client
+  -> FastAPI / Telegram / MCP
+  -> AgentRunner
+  -> ConfiguredAgent
+  -> Skills / LLM Providers
 ```
 
-## Quick Start
+Main boundaries:
 
-### 1. Setup
+- `app/api/` handles HTTP transport and request validation.
+- `app/agents/base/` contains the ADK-first runtime.
+- `app/agents/registry.py` registers and instantiates agents.
+- `app/skills/` contains portable, reusable capabilities.
+- `app/mcp/` exposes tools/resources through an MCP-style layer.
+- `app/providers/` isolates LLM provider implementations.
+- `app/core/` centralizes configuration, logging, and security.
 
-Clone or initialize the repository:
-
-```bash
-cd agentic-core-template
-```
-
-Install dependencies:
+## Quickstart
 
 ```bash
 make install-dev
-```
-
-Configure environment:
-
-```bash
 cp .env.example .env
-# Edit .env with your configuration
-```
-
-### 2. Configure LLM Provider
-
-Set your LLM provider and API key in `.env`:
-
-```bash
-LLM_PROVIDER=openrouter  # or 'openai'
-LLM_MODEL=meta-llama/llama-3.1-70b-instruct
-OPENROUTER_API_KEY=your-api-key
-```
-
-### 3. Run API Server
-
-```bash
+make config-check
 make run-api
 ```
 
-The API will be available at `http://localhost:8000`.
+The API runs at `http://localhost:8000`.
 
-- **Health check**: `GET /api/health/health`
-- **API docs**: `GET /docs`
+Useful checks:
 
-### 4. Test Endpoints
-
-#### Health Check
 ```bash
 curl http://localhost:8000/api/health/health
+make test
 ```
 
-#### Run Agent
-```bash
-curl -X POST http://localhost:8000/api/agents/run \
-  -H "Content-Type: application/json" \
-  -d '{
-    "agent_id": "default",
-    "input": "What is 2 + 2?",
-    "system_prompt": "You are a helpful assistant."
-  }'
+Current smoke-tested behavior:
+
+- FastAPI app loads.
+- `GET /api/health/health` returns healthy status.
+- A minimal `ConfiguredAgent` with a dummy provider can execute a turn.
+
+## Creating an Agent
+
+Every new agent should subclass `ConfiguredAgent`. Do not call LLM providers directly from API routes, Telegram handlers, or skills.
+
+Recommended structure:
+
+```text
+app/agents/<agent_name>/
+  __init__.py
+  agent.py
+  routing.py
+  context.py
+  message_builders.py
+  prompt.md
 ```
 
-#### List Available Agents
-```bash
-curl http://localhost:8000/api/agents
-```
-
-#### MCP Tools
-```bash
-curl http://localhost:8000/api/mcp/tools
-```
-
-## Key Components
-
-### Agents
-
-Agents are the main execution units. Create a new agent:
+Minimal example:
 
 ```python
-from app.agents.base_agent import BaseAgent
+from app.agents.base import ConfiguredAgent
 
-class MyAgent(BaseAgent):
+
+class MyAgent(ConfiguredAgent):
     def __init__(self):
         super().__init__(
             agent_id="my-agent",
             name="My Agent",
-            system_prompt="You are helpful.",
+            system_prompt="You are a helpful assistant.",
         )
-
-# Register and use
-from app.agents.registry import get_registry
-registry = get_registry()
-registry.register("my-agent", MyAgent)
-
-agent = registry.instantiate("my-agent", agent_id="my-agent")
-response = agent.run("Hello!")
 ```
 
-### Skills
+Register agents in `app/agents/registry.py`, then invoke them through:
 
-Skills are reusable units of work, compatible with **agentic-cowork-hub**:
+- `GET /api/agents`
+- `POST /api/agents/run`
+- `POST /api/agents/{agent_id}/run`
+
+For detailed guidance, see [docs/standards/agent-development-guide.md](docs/standards/agent-development-guide.md).
+
+## Creating a Skill
+
+Skills are portable capability units. They must not depend on `app/agents/`, so they can be reused by agents, exposed through MCP, or tested in isolation.
+
+Contract:
 
 ```python
+from typing import Any, Dict
+
 from app.skills.base.skill import BaseSkill
+
 
 class MySkill(BaseSkill):
     def __init__(self):
         super().__init__(
             name="my-skill",
-            description="Does something useful",
+            description="Does one focused task.",
         )
-    
-    def run(self, input_data: dict) -> dict:
-        # Implement skill logic
+
+    def run(self, input_data: Dict[str, Any]) -> Dict[str, Any]:
         return {"result": "output"}
-
-# Use the skill
-skill = MySkill()
-result = skill.run({"param": "value"})
 ```
 
-### LLM Providers
-
-Providers are abstracted through a factory:
-
-```python
-from app.providers.factory import get_llm_provider
-
-provider = get_llm_provider()  # Uses LLM_PROVIDER env var
-
-# Generate text
-response = await provider.generate(
-    prompt="What is AI?",
-    system_prompt="You are knowledgeable.",
-)
-
-# Call with tools
-response = await provider.generate_with_tools(
-    prompt="Calculate 2+2",
-    tools=[...]
-)
-```
-
-### MCP Integration
-
-Expose agent capabilities via MCP:
-
-```python
-from app.mcp.tool_registry import get_mcp_server
-
-server = get_mcp_server()
-
-# Register a tool
-server.register_tool(
-    tool_id="my-tool",
-    description="Does something",
-    input_schema={"type": "object", "properties": {}},
-    handler=my_handler_function,
-)
-
-# List tools
-tools = server.list_tools()
-```
-
-### Telegram Bot
-
-Enable Telegram integration by setting:
-
-```bash
-TELEGRAM_ENABLED=True
-TELEGRAM_BOT_TOKEN=your-bot-token
-```
-
-Messages are automatically routed to agents.
-
-**Webhook setup** (if using Telegram webhooks):
-
-```bash
-curl -X POST https://api.telegram.org/bot<TOKEN>/setWebhook \
-  -d "url=https://your-domain/api/telegram/webhook"
-```
+For detailed guidance, see [docs/standards/skill-development-guide.md](docs/standards/skill-development-guide.md).
 
 ## Configuration
 
-Personal Agent Runtime uses **layered environment configuration** for flexible deployment across development, staging, and production environments.
+Configuration is split by sensitivity:
 
-### Quick Setup
+- `.env` stores secrets and private values only.
+- `params/base/params.yml` stores shared non-secret defaults.
+- `params/{dev,pre,prod}/params.yml` stores environment-specific non-secret settings.
+- System environment variables override everything.
+
+Examples:
 
 ```bash
-# Create configuration from examples
-cp .env.base.example .env.base      # Common configuration
-cp .env.dev.example .env.dev        # Development overrides
-touch .env.local                    # Local secrets (git-ignored)
-
-# Add your secrets to .env.local (never commit these)
-echo "OPENROUTER_API_KEY=sk-or-v1-your-key" >> .env.local
-echo "TELEGRAM_BOT_TOKEN=123456:ABCDEF" >> .env.local
-
-# Verify configuration is valid
+cp .env.example .env
 make config-check
 ```
 
-### How Configuration Works
+Secrets that belong in `.env`:
 
-Configuration is loaded in priority order (highest priority last):
+- `OPENROUTER_API_KEY`
+- `OPENAI_API_KEY`
+- `API_KEY`
+- `SECRET_KEY`
+- `TELEGRAM_BOT_TOKEN`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- database URLs and credentials
 
-1. **.env.base** — Common base configuration (versioned)
-2. **.env.{APP_ENV}** — Environment overrides (dev/pre/prod, versioned as examples)
-3. **.env.local** — Local secrets (NOT versioned, git-ignored)
-4. **System environment variables** — Override everything (highest priority)
+Non-secret runtime parameters that belong in `params/`:
 
-### Configuration Validation
+- `APP_ENV`
+- log level
+- CORS origins
+- feature flags
+- execution limits
+- enabled/disabled integrations
 
-Run diagnostics to verify your configuration:
+For complete details, see [docs/configuration.md](docs/configuration.md) and [docs/standards/configuration-standards.md](docs/standards/configuration-standards.md).
 
-```bash
-make config-check
-```
+## Integrations
 
-Shows active environment, enabled features, and validation status.
+### Telegram
 
-### For Complete Configuration Documentation
+The Telegram integration supports webhook handling, allowlist checks, signature validation, command routing, and message forwarding to agents.
 
-See [docs/configuration.md](docs/configuration.md) for:
-- Detailed setup instructions per environment
-- All configuration fields reference
-- Best practices for secrets management
-- CI/CD integration examples
-- Troubleshooting guide
+Relevant endpoints:
 
-### Core Settings
+- `POST /api/telegram/webhook`
+- `POST /api/telegram/message`
+- `GET /api/telegram/status`
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `APP_ENV` | dev | Environment (dev/pre/prod) |
-| `LLM_PROVIDER` | openrouter | LLM provider (openrouter, openai) |
-| `LLM_MODEL` | meta-llama/llama-3.1-70b-instruct | Model identifier |
-| `OPENROUTER_API_KEY` | - | OpenRouter API key |
-| `OPENAI_API_KEY` | - | OpenAI API key |
-| `TELEGRAM_ENABLED` | False | Enable Telegram bot |
-| `TELEGRAM_BOT_TOKEN` | - | Telegram bot token |
-| `SUPABASE_ENABLED` | False | Enable Supabase |
-| `SUPABASE_URL` | - | Supabase project URL |
-| `MCP_ENABLED` | False | Enable MCP server |
-| `LOG_LEVEL` | INFO | Logging verbosity |
+### MCP
+
+The MCP layer exposes registered tools and resources through HTTP endpoints.
+
+Relevant endpoints:
+
+- `GET /api/mcp/info`
+- `GET /api/mcp/tools`
+- `GET /api/mcp/resources`
+- `POST /api/mcp/tools/call`
+
+### Supabase
+
+Supabase/database configuration is present as an optional integration surface. It is disabled by default and should be wired only when a concrete persistence use case exists.
+
+### OpenRouter / OpenAI
+
+LLM providers are selected through configuration and isolated behind the provider abstraction in `app/providers/`.
+
+## Security Guardrails
+
+The template includes:
+
+- API key protection for sensitive POST endpoints
+- Telegram user allowlist support
+- Telegram webhook signature verification
+- CORS restrictions without wildcard defaults
+- `ALLOWED_HOSTS` enforcement through trusted host middleware
+- Safe secret masking for logs
+- Input/output size limits
+- Agent timeout limits
+- Model/tool/turn execution limits
+- Loop detection for repeated runaway turns
+
+Security standards are documented in [docs/standards/security-standards.md](docs/standards/security-standards.md).
 
 ## API Endpoints
 
-### Health & Info
-- `GET /api/health/health` — Health status
-- `GET /api/health/info` — Application info
+Health:
 
-### Agents
-- `GET /api/agents` — List available agents
-- `GET /api/agents/{agent_id}` — Agent info
-- `POST /api/agents/run` — Run an agent with `agent_id` in body
-- `POST /api/agents/{agent_id}/run` — Run an agent by route ID
+- `GET /api/health/health`
+- `GET /api/health/info`
 
-### MCP
-- `GET /api/mcp/info` — Server info
-- `GET /api/mcp/tools` — List tools
-- `GET /api/mcp/resources` — List resources
-- `POST /api/mcp/tools/call` — Call a tool
+Agents:
 
-### Telegram
-- `POST /api/telegram/webhook` — Telegram webhook
-- `POST /api/telegram/message` — Send message
-- `GET /api/telegram/status` — Bot status
+- `GET /api/agents`
+- `GET /api/agents/{agent_id}`
+- `POST /api/agents/run`
+- `POST /api/agents/{agent_id}/run`
+- `POST /api/agents/{agent_id}/reset`
 
-## Documentation
+MCP:
 
-| Document | Description |
-|----------|-------------|
-| [docs/architecture.md](docs/architecture.md) | System architecture, layers, and data flow |
-| [docs/decisions/0001-adk-first-runtime.md](docs/decisions/0001-adk-first-runtime.md) | ADR: why ADK over LangChain/CrewAI |
-| [docs/standards/agent-development-guide.md](docs/standards/agent-development-guide.md) | How to create and register agents |
-| [docs/standards/skill-development-guide.md](docs/standards/skill-development-guide.md) | How to build portable skills |
-| [docs/standards/mcp-integration-guide.md](docs/standards/mcp-integration-guide.md) | Exposing skills via MCP |
-| [docs/standards/client-integration-guide.md](docs/standards/client-integration-guide.md) | REST API, Telegram, and future clients |
-| [docs/standards/configuration-standards.md](docs/standards/configuration-standards.md) | Layered env config, all variables |
-| [docs/standards/security-standards.md](docs/standards/security-standards.md) | API key auth, CORS, safe logging |
-| [AGENTS.md](AGENTS.md) | AI agent coding context and constraints |
-| [.codex/PROJECT_CONTEXT.md](.codex/PROJECT_CONTEXT.md) | Codex project context and folder map |
+- `GET /api/mcp/info`
+- `GET /api/mcp/tools`
+- `GET /api/mcp/resources`
+- `POST /api/mcp/tools/call`
 
----
+Telegram:
+
+- `POST /api/telegram/webhook`
+- `POST /api/telegram/message`
+- `GET /api/telegram/status`
 
 ## Development
 
-### Lint & Format
 ```bash
-make lint      # Check code
-make format    # Format code
-```
-
-### Run Tests
-```bash
+make install-dev
+make config-check
+make run-api
 make test
-# or
-python -m pytest
 ```
 
----
+Additional commands:
 
-## Skills Compatibility with agentic-cowork-hub
-
-This project is designed to be fully compatible with **agentic-cowork-hub** skills:
-
-1. **Same BaseSkill interface** — Skills written for one platform work in both
-2. **No strong coupling** — Skills are independent modules
-3. **Shared tool registry** — MCP tools and shared skills can be imported across projects
-
-To use skills from agentic-cowork-hub:
-
-```python
-# Import directly
-from agentic_cowork_hub.tools.portfolio_tools import get_portfolio_positions
-
-# Register in your runtime
-from app.skills.base.registry import get_registry
-registry = get_registry()
-# ... adapt as needed
+```bash
+make lint
+make format
+make clean
 ```
 
-## Future Extensions
+## Project Status
 
-Not in this scaffold but roadmap:
+This repository is a v0.3 technical template: usable, structured, and tested, but not production-battle-tested.
 
-- [ ] RAG layer
-- [ ] Vector database integration
-- [ ] Observability / telemetry
-- [ ] Advanced authentication
-- [ ] UI frontend
-- [ ] Multi-agent orchestration
-- [ ] Persistent memory service
+It is intended as a strong starting point, not a finished product. Before production use, review deployment security, observability, persistence, operational runbooks, and the specific risks of your agent domain.
 
-## Design Principles
+Known template-level follow-up:
 
-- **KISS** — Keep it simple and straightforward
-- **YAGNI** — You aren't gonna need it (avoid over-engineering)
-- **Modularity** — Clear separation of concerns
-- **Composability** — Easy to combine skills and agents
-- **Compatibility** — Works with agentic-cowork-hub ecosystem
+- Add production-grade MCP business tools
+- Decide the removal timeline for deprecated `BaseAgent`
+- Complete or trim unused future-facing areas such as `TurnMode.AGENTIC`, `TurnMode.STREAMING`, partial snapshots, and database stubs
+- Add observability and production telemetry when there is a concrete deployment target
+
+## Reports
+
+- [reports/architecture_audit.md](reports/architecture_audit.md)
 
 ## License
 
-[Add your license here]
-
-## Contributing
-
-[Add contribution guidelines here]
-
-## Support
-
-For questions and issues, please refer to the project documentation or open an issue.
-
----
-
-**Built with ❤️ for agentic development**
+MIT. See [LICENSE](LICENSE).

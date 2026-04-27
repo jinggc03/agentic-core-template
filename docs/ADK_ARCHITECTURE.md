@@ -595,19 +595,22 @@ def test_agent_multi_turn():
 
 ## Backward Compatibility
 
-### Using Legacy BaseAgent API
+### Legacy BaseAgent Status
 ```python
-from app.agents.base_agent import BaseAgent
+from app.agents.base import ConfiguredAgent
 
-# Still works - wraps ConfiguredAgent
-agent = BaseAgent(
-    agent_id="legacy-agent",
-    name="Legacy Agent",
+# New code should use ConfiguredAgent directly.
+agent = ConfiguredAgent(
+    agent_id="my-agent",
+    name="My Agent",
     system_prompt="You are helpful"
 )
 
 output = agent.run("Hello")  # Sync API
 ```
+
+`BaseAgent` remains available only as a deprecated compatibility wrapper and
+emits `DeprecationWarning` when instantiated.
 
 ## Example: Invoice Agent
 

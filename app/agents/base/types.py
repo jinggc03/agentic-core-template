@@ -3,7 +3,7 @@
 from enum import Enum
 from typing import Any, Dict, List, Optional
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from pydantic import BaseModel, Field, ConfigDict
 
 
@@ -23,12 +23,17 @@ class ToolScope(str, Enum):
     FULL = "full"  # Full tool access
 
 
+def _utc_now() -> datetime:
+    """Return a timezone-aware UTC timestamp."""
+    return datetime.now(timezone.utc)
+
+
 class Message(BaseModel):
     """A single message in conversation."""
     
     role: str = Field(..., description="Message role (user/assistant/system/tool)")
     content: str = Field(..., description="Message content")
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    timestamp: datetime = Field(default_factory=_utc_now)
     metadata: Dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
 
 
@@ -40,8 +45,8 @@ class Snapshot(BaseModel):
     turn_count: int = Field(default=0, description="Number of turns")
     messages: List[Message] = Field(default_factory=list, description="Message history")
     state: Dict[str, Any] = Field(default_factory=dict, description="Agent state")
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=_utc_now)
+    updated_at: datetime = Field(default_factory=_utc_now)
 
 
 class ExecutionPolicy:

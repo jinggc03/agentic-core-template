@@ -253,11 +253,12 @@ class TestBackwardCompatibility:
 
     def test_base_agent_creation(self):
         """Test BaseAgent creation (compatibility)."""
-        agent = BaseAgent(
-            agent_id="compat-agent",
-            name="Compatibility Agent",
-            system_prompt="You are helpful",
-        )
+        with pytest.warns(DeprecationWarning, match="BaseAgent is deprecated"):
+            agent = BaseAgent(
+                agent_id="compat-agent",
+                name="Compatibility Agent",
+                system_prompt="You are helpful",
+            )
         
         assert agent.agent_id == "compat-agent"
         # Should inherit from ConfiguredAgent
@@ -265,11 +266,12 @@ class TestBackwardCompatibility:
 
     def test_base_agent_legacy_api(self):
         """Test BaseAgent legacy API."""
-        agent = BaseAgent(
-            agent_id="compat-agent",
-            name="Compatibility Agent",
-            system_prompt="You are helpful",
-        )
+        with pytest.warns(DeprecationWarning, match="BaseAgent is deprecated"):
+            agent = BaseAgent(
+                agent_id="compat-agent",
+                name="Compatibility Agent",
+                system_prompt="You are helpful",
+            )
         
         # Legacy methods should exist
         assert hasattr(agent, "reset_history")

@@ -37,4 +37,5 @@ env/
 *.swo
 *~
 .DB_Store
-reports/
+reports/*
+!reports/architecture_audit.md

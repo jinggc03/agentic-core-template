@@ -1,11 +1,16 @@
 """Invoice agent context management."""
 
 from typing import Optional
-from datetime import datetime
+from datetime import datetime, timezone
 from examples.invoice_agent.types import InvoiceContext, InvoiceData, InvoiceValidationResult
 from app.core.logging import get_logger
 
 logger = get_logger(__name__)
+
+
+def _utc_now() -> datetime:
+    """Return a timezone-aware UTC timestamp."""
+    return datetime.now(timezone.utc)
 
 
 class InvoiceContextManager:
@@ -21,7 +26,7 @@ class InvoiceContextManager:
     def __init__(self):
         """Initialize context manager."""
         self.context = InvoiceContext()
-        self.last_updated = datetime.utcnow()
+        self.last_updated = _utc_now()
 
     def load_context(self, saved_context: Optional[dict]) -> InvoiceContext:
         """Load context from snapshot or external source.
@@ -35,7 +40,7 @@ class InvoiceContextManager:
         if saved_context:
             try:
                 self.context = InvoiceContext(**saved_context)
-                self.last_updated = datetime.utcnow()
+                self.last_updated = _utc_now()
                 logger.debug("Context loaded from snapshot")
             except Exception as e:
                 logger.warning(f"Failed to load context: {e}, using default")
@@ -51,7 +56,7 @@ class InvoiceContextManager:
         Returns:
             Context dictionary
         """
-        self.last_updated = datetime.utcnow()
+        self.last_updated = _utc_now()
         return self.context.model_dump()
 
     def update_invoice_data(self, invoice_data: InvoiceData) -> None:
@@ -62,7 +67,7 @@ class InvoiceContextManager:
         """
         self.context.invoice_data = invoice_data
         self.context.processing_stage = "data_extracted"
-        self.last_updated = datetime.utcnow()
+        self.last_updated = _utc_now()
         logger.debug("Invoice data updated in context")
 
     def update_validation_result(self, result: InvoiceValidationResult) -> None:
@@ -73,7 +78,7 @@ class InvoiceContextManager:
         """
         self.context.validation_result = result
         self.context.processing_stage = "validated" if result.is_valid else "validation_failed"
-        self.last_updated = datetime.utcnow()
+        self.last_updated = _utc_now()
         logger.debug(f"Validation result updated: valid={result.is_valid}")
 
     def is_invoice_extracted(self) -> bool:
@@ -141,5 +146,5 @@ class InvoiceContextManager:
     def reset(self):
         """Reset context."""
         self.context = InvoiceContext()
-        self.last_updated = datetime.utcnow()
+        self.last_updated = _utc_now()
         logger.debug("Context reset")

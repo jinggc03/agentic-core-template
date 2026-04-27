@@ -211,8 +211,8 @@ Example output:
 
 | Variable | Type | Default | Description |
 |----------|------|---------|-------------|
-| `ALLOW_AGENT_REGISTRATION` | bool | true | Allow dynamic agent registration |
-| `ENABLE_METRICS` | bool | false | Collect usage metrics |
+| `ALLOW_AGENT_REGISTRATION` | bool | true | Template placeholder; documented future scope, not enforced in runtime yet |
+| `ENABLE_METRICS` | bool | false | Template placeholder; no metrics pipeline is wired yet |
 | `ENABLE_STRUCTURED_LOGS` | bool | false | Output logs as JSON |
 
 ### Security (Production)
