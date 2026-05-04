@@ -1,12 +1,14 @@
 """Telegram endpoint."""
 
 import json
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
 from typing import Optional
 
 from app.integrations.telegram.bot import get_telegram_bot
 from app.integrations.telegram.handlers import TelegramHandler
+from app.api.deps import get_auth_context
+from app.auth.context import AuthContext
 from app.core.security import is_telegram_user_allowed, verify_telegram_signature
 from app.core.logging import get_logger
 
@@ -83,6 +85,9 @@ async def telegram_webhook(request: Request):
         # Silently ignore — do not reveal allowlist existence to the caller
         return {"ok": True}
 
+    auth_context = AuthContext(auth_mode="telegram_webhook", actor_id=str(user_id))
+    logger.debug(f"Telegram auth context resolved for actor_id={auth_context.actor_id}")
+
     if message_text.startswith("/"):
         # Handle command
         parts = message_text.split()
@@ -93,14 +98,21 @@ async def telegram_webhook(request: Request):
     else:
         # Handle regular message
         handler = TelegramHandler()
-        response = await handler.handle_message(chat_id, message_text)
+        response = await handler.handle_message(
+            chat_id,
+            message_text,
+            auth_context=auth_context,
+        )
 
     await bot.send_message(chat_id, response)
     return {"ok": True}
 
 
 @router.post("/message", tags=["telegram"])
-async def send_telegram_message(request: TelegramMessageRequest):
+async def send_telegram_message(
+    request: TelegramMessageRequest,
+    auth_context: AuthContext = Depends(get_auth_context),
+):
     """Send a message via Telegram.
     
     Args:
@@ -118,7 +130,7 @@ async def send_telegram_message(request: TelegramMessageRequest):
 
 
 @router.get("/status", tags=["telegram"])
-async def telegram_status():
+async def telegram_status(auth_context: AuthContext = Depends(get_auth_context)):
     """Get Telegram bot status.
     
     Returns:

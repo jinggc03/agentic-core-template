@@ -251,7 +251,7 @@ Implemented Supabase support:
 - Supabase pgvector schema for optional RAG knowledge retrieval
 - Versioned schema and baseline RLS policies under `supabase/migrations/`
 - Optional Storage helper for upload, download, and signed URLs
-- Optional Supabase Auth dependency for FastAPI routes that need Bearer-token user context
+- Optional Supabase Auth support through the canonical `AUTH_MODE=supabase_auth`
 - Optional integration tests gated by `SUPABASE_TESTS=true`
 
 Local commands:
@@ -275,7 +275,10 @@ LLM providers are selected through configuration and isolated behind the provide
 
 The template includes:
 
-- API key protection for sensitive POST endpoints
+- Canonical `AUTH_MODE` support: `off`, `api_key`, and `supabase_auth`
+- `AuthContext` propagation through protected routes and the agent runtime
+- API key protection through `AUTH_MODE=api_key`
+- Supabase Auth JWT validation through `AUTH_MODE=supabase_auth`
 - Telegram user allowlist support
 - Telegram webhook signature verification
 - CORS restrictions without wildcard defaults
@@ -287,6 +290,41 @@ The template includes:
 - Loop detection for repeated runaway turns
 
 Security standards are documented in [docs/standards/security-standards.md](docs/standards/security-standards.md).
+
+### Auth Modes
+
+`AUTH_MODE` controls authentication for protected FastAPI surfaces:
+
+- `off`: anonymous local development only; invalid when `APP_ENV=prod`
+- `api_key`: requires `X-API-Key: <API_KEY>`
+- `supabase_auth`: requires `Authorization: Bearer <Supabase JWT>` and `SUPABASE_JWT_SECRET`
+
+Production defaults in `params/prod/params.yml` use `auth.mode: api_key`. For Supabase Auth deployments:
+
+```env
+APP_ENV=prod
+AUTH_MODE=supabase_auth
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_JWT_SECRET=your-supabase-jwt-secret
+```
+
+Example API key request:
+
+```bash
+curl -X POST http://localhost:8000/api/agents/run \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: $API_KEY" \
+  -d '{"agent_id":"invoice-agent","input":"hello"}'
+```
+
+Example Supabase Auth request:
+
+```bash
+curl -X POST http://localhost:8000/api/agents/run \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
+  -d '{"agent_id":"invoice-agent","input":"hello"}'
+```
 
 ## API Endpoints
 

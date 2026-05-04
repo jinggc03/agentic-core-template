@@ -4,7 +4,7 @@ import hmac
 import hashlib
 from typing import Optional
 
-from fastapi import Security, HTTPException, status
+from fastapi import Security
 from fastapi.security import APIKeyHeader
 
 from app.core.logging import get_logger
@@ -17,36 +17,13 @@ _api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
 
 
 def require_api_key(api_key: Optional[str] = Security(_api_key_header)) -> str:
-    """FastAPI dependency — validates the X-API-Key header.
+    """Backward-compatible FastAPI dependency for X-API-Key validation.
 
-    Use as:
-        @router.post("/run")
-        async def run(request: ..., _: str = Depends(require_api_key)):
-
-    The check is skipped when API_KEY_ENABLED=False (dev convenience).
-    In production this should always be enabled.
+    New protected endpoints should use app.auth.dependencies.get_auth_context.
     """
-    from app.core.config import settings  # lazy import to avoid circular
+    from app.auth.dependencies import require_api_key_compat
 
-    if not settings.API_KEY_ENABLED:
-        return "disabled"
-
-    expected = settings.API_KEY
-    if not expected:
-        # Misconfiguration: enabled but no key set → refuse all requests
-        logger.warning("API_KEY_ENABLED=true but API_KEY is not set — denying request")
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="API key authentication is not configured",
-        )
-
-    if not api_key or not hmac.compare_digest(expected, api_key):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Invalid or missing API key",
-        )
-
-    return api_key
+    return require_api_key_compat(api_key)
 
 
 # ─── Telegram allowlist ───────────────────────────────────────────────────────

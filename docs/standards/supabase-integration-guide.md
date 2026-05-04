@@ -174,20 +174,28 @@ Keep `SUPABASE_SERVICE_ROLE_KEY` backend-only. User-facing products should revie
 
 ## Auth Usage
 
-Supabase Auth is optional. Existing `X-API-Key` backend auth remains unchanged.
+Supabase Auth is optional and is enabled through the canonical FastAPI auth mode:
 
-Routes that want Supabase user context can opt in:
+```env
+AUTH_MODE=supabase_auth
+SUPABASE_JWT_SECRET=your-supabase-jwt-secret
+```
+
+The runtime validates `Authorization: Bearer <jwt>` locally with `SUPABASE_JWT_SECRET`, maps the JWT `sub` claim to `AuthContext.actor_id`, and does not trust mutable metadata claims for roles, scopes, or tenant assignment.
+
+Protected routes should use `get_auth_context`:
 
 ```python
 from fastapi import Depends
-from app.integrations.supabase.auth import SupabaseUser, get_current_supabase_user
+from app.api.deps import get_auth_context
+from app.auth.context import AuthContext
 
 
-def route(user: SupabaseUser = Depends(get_current_supabase_user)):
-    return {"user_id": user.id}
+def route(auth_context: AuthContext = Depends(get_auth_context)):
+    return {"actor_id": auth_context.actor_id}
 ```
 
-This dependency validates a Bearer token through Supabase Auth only when used.
+The older `app.integrations.supabase.auth` helper remains optional, but new backend routes should use `AuthContext` to avoid coupling agent/runtime code to Supabase SDK details.
 
 ## Testing
 

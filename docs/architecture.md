@@ -10,10 +10,10 @@ This document describes the architecture of `agentic-core-template`.
 ┌─────────────────────────────────────────────────────────┐
 │                     FastAPI (Transport)                  │
 │                                                          │
-│  GET  /api/agents          List registered agents        │
+│  GET  /api/agents          List registered agents [auth] │
 │  POST /api/agents/run      Run an agent turn  [auth]     │
 │  POST /api/agents/*/reset  Reset session      [auth]     │
-│  GET  /api/mcp/tools       List MCP tools                │
+│  GET  /api/mcp/tools       List MCP tools         [auth] │
 │  POST /api/mcp/tools/call  Call a tool        [auth]     │
 │  POST /api/telegram/webhook Telegram messages            │
 │  GET  /health              Health check                  │
@@ -49,7 +49,7 @@ This document describes the architecture of `agentic-core-template`.
 
 Responsibilities:
 - HTTP request/response handling
-- Authentication (`X-API-Key` via `require_api_key`)
+- Authentication (`AUTH_MODE` via `get_auth_context`)
 - Input validation (Pydantic request models)
 - CORS enforcement
 - Routing to ADK runtime or skills
@@ -85,7 +85,7 @@ Portable, agent-agnostic capability units. Each skill:
 
 `app/api/routes/mcp.py`
 
-Exposes skills to external MCP-compatible clients. The MCP layer is purely transport — it calls skills directly without going through the agent turn pipeline. Protected POST routes require `X-API-Key`.
+Exposes skills to external MCP-compatible clients. The MCP layer is purely transport — it calls skills directly without going through the agent turn pipeline. Protected routes use `get_auth_context`.
 
 ### Integrations
 
@@ -104,9 +104,11 @@ Loaded from layered `.env` files:
 
 ### Security layer
 
-`app/core/security.py`
+`app/auth/` and `app/core/security.py`
 
-- `require_api_key()` — FastAPI dependency for `X-API-Key` enforcement
+- `get_auth_context()` — canonical FastAPI dependency for `AUTH_MODE`
+- `AuthContext` — transport-neutral identity context passed into runtime
+- `require_api_key()` — backward-compatible wrapper for legacy imports
 - `is_telegram_user_allowed()` — Telegram ID allowlist check
 - `mask_secret()` / `safe_repr_settings()` — safe logging utilities
 
@@ -117,9 +119,9 @@ Loaded from layered `.env` files:
 ```
 Client
   │ POST /api/agents/run {"agent_id": "invoice-agent", "input": "..."}
-  │ X-API-Key: <key>
+  │ X-API-Key: <key> or Authorization: Bearer <jwt>
   ▼
-require_api_key()         ← hmac.compare_digest(), 403 if invalid
+get_auth_context()        ← AUTH_MODE validation, 401/403 if invalid
   ▼
 AgentRunRequest validation ← Pydantic, 422 if malformed
   ▼

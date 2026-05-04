@@ -322,6 +322,6 @@ registry.register("my-agent", MyAgent)
 ## Security requirements
 
 - All agent endpoints require `X-API-Key` header.
-- Use `Depends(require_api_key)` in every new `POST` route under `/api/`.
+- Use `Depends(get_auth_context)` in every new protected route under `/api/`.
 - Never log or print API keys; use `mask_secret()` from `app.core.security`.
 - `BaseAgent` is deprecated and emits `DeprecationWarning` — migrate to `ConfiguredAgent`.

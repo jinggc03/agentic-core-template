@@ -138,6 +138,10 @@ class Settings(BaseSettings):
         default="",
         description="Supabase service role key",
     )
+    SUPABASE_JWT_SECRET: str = Field(
+        default="",
+        description="Supabase JWT secret for local JWT validation",
+    )
     SUPABASE_DB_URL: str = Field(
         default="",
         description="Supabase database connection string",
@@ -226,6 +230,10 @@ class Settings(BaseSettings):
         default="dev-insecure-key",
         description="Secret key for signing (production must override)",
     )
+    AUTH_MODE: Literal["off", "api_key", "supabase_auth"] = Field(
+        default="off",
+        description="Canonical authentication mode",
+    )
     ALLOWED_HOSTS: str = Field(
         default="localhost,127.0.0.1",
         description="Comma-separated list of allowed hosts",
@@ -286,7 +294,22 @@ class Settings(BaseSettings):
         """Validate and normalize APP_ENV."""
         if isinstance(v, str):
             v = v.lower().strip()
+            if v == "prd":
+                v = "prod"
         return v or "dev"
+
+    @field_validator("AUTH_MODE", mode="before")
+    @classmethod
+    def validate_auth_mode(cls, v: str) -> str:
+        """Validate and normalize AUTH_MODE."""
+        if isinstance(v, str):
+            normalized = v.lower().strip()
+            if normalized in {"false", "0", "no", "disabled"}:
+                return "off"
+            if normalized in {"true", "1", "yes", "enabled"}:
+                return "api_key"
+            return normalized
+        return v or "off"
 
     @field_validator(
         "LLM_API_KEY",
@@ -294,6 +317,7 @@ class Settings(BaseSettings):
         "OPENAI_API_KEY",
         "DEEPSEEK_API_KEY",
         "EMBEDDING_API_KEY",
+        "SUPABASE_JWT_SECRET",
         mode="before",
     )
     @classmethod
@@ -327,8 +351,12 @@ class Settings(BaseSettings):
             if not self.SECRET_KEY or self.SECRET_KEY == "dev-insecure-key":
                 errors.append("SECRET_KEY must be set in production")
 
-            if self.API_KEY_ENABLED and not self.API_KEY:
-                errors.append("API_KEY must be set when API_KEY_ENABLED=true in production")
+            if self.AUTH_MODE == "off":
+                errors.append("AUTH_MODE=off is not allowed in production")
+            if self.AUTH_MODE == "api_key" and not self.API_KEY:
+                errors.append("API_KEY must be set when AUTH_MODE=api_key in production")
+            if self.AUTH_MODE == "supabase_auth" and not self.SUPABASE_JWT_SECRET:
+                errors.append("SUPABASE_JWT_SECRET must be set when AUTH_MODE=supabase_auth")
 
             if self.SUPABASE_ENABLED:
                 if not self.SUPABASE_URL:
@@ -432,6 +460,7 @@ class Settings(BaseSettings):
             if "model"    in llm: flat["LLM_MODEL"]    = str(llm["model"])
 
             sec = data.get("security", {})
+            if "auth_mode"          in sec: flat["AUTH_MODE"]             = str(sec["auth_mode"])
             if "api_key_enabled"    in sec: flat["API_KEY_ENABLED"]      = sec["api_key_enabled"]
             if "cors_allowed_origins" in sec: flat["CORS_ALLOWED_ORIGINS"] = str(sec["cors_allowed_origins"])
             if "allowed_hosts"      in sec: flat["ALLOWED_HOSTS"]        = str(sec["allowed_hosts"])

@@ -29,7 +29,7 @@ app/
 │   │   └── __init__.py
 │   └── registry.py               # {agent_id: AgentClass} mapping
 ├── api/
-│   ├── deps.py                   # require_api_key FastAPI dependency
+│   ├── deps.py                   # get_auth_context dependency and legacy require_api_key wrapper
 │   └── routes/
 │       ├── agent.py              # POST /run, POST /{agent_id}/run, GET /
 │       ├── mcp.py                # GET /tools, POST /tools/call
@@ -38,7 +38,7 @@ app/
 ├── core/
 │   ├── config.py                 # pydantic-settings Settings class
 │   ├── logging.py                # get_logger(), structured log helpers
-│   └── security.py               # require_api_key, is_telegram_user_allowed, mask_secret
+│   └── security.py               # Telegram security, legacy API key wrapper, safe logging
 ├── integrations/
 │   └── telegram/
 │       ├── bot.py                # TelegramBot wrapper
@@ -99,7 +99,7 @@ class MyAgent(ConfiguredAgent):
 1. Implement the skill (see above)
 2. Register it in `app/mcp/tools.py` (create if not present)
 3. Wire the call in `app/api/routes/mcp.py`
-4. Add `_: str = Depends(require_api_key)` to the POST handler
+4. Add `auth_context: AuthContext = Depends(get_auth_context)` to the protected handler
 
 ---
 
@@ -138,7 +138,8 @@ echo "OPENROUTER_API_KEY=sk-..." > .env.local
 - All LLM access goes through the ADK turn pipeline — never call providers directly
 - Never use `*` in CORS origins
 - Never print or log secret values — use `mask_secret()` from `app.core.security`
-- Every new POST endpoint under `/api/` needs `Depends(require_api_key)`
+- Every new protected endpoint under `/api/` needs `Depends(get_auth_context)`
+- `/api/telegram/webhook` is the explicit public webhook exception and must keep signature plus allowlist security
 - Every new config variable needs to appear in all four `.env.*.example` files
 - Skills must not depend on specific agents
 

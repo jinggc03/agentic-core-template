@@ -75,10 +75,12 @@ When you add a new `Field(...)` to `app/core/config.py`, you MUST also:
 ## Any new POST endpoint → define security
 
 Every new `POST` endpoint under `/api/` must:
-1. Add `_: str = Depends(require_api_key)` unless it is explicitly a public webhook
+1. Add `auth_context: AuthContext = Depends(get_auth_context)` unless it is explicitly a public webhook
 2. Add tests for both authenticated and unauthenticated access
 
-Public webhook exception: `/api/telegram/webhook` uses Telegram's own allowlist (`TELEGRAM_ALLOWED_USER_IDS`) instead of the API key.
+Public webhook exception: `/api/telegram/webhook` uses Telegram signature/timestamp validation and `TELEGRAM_ALLOWED_USER_IDS`, then creates `AuthContext(auth_mode="telegram_webhook", actor_id=str(user_id))`.
+
+`require_api_key` exists only as a backward-compatible wrapper. New protected endpoints must use `get_auth_context`.
 
 ---
 
@@ -99,7 +101,7 @@ app/
 │   ├── base/           # ADK framework — do not modify for individual agents
 │   └── registry.py     # Register new agents here
 ├── api/
-│   ├── deps.py         # FastAPI dependency injection (require_api_key, etc.)
+│   ├── deps.py         # FastAPI dependency injection (get_auth_context, legacy require_api_key)
 │   └── routes/         # One file per surface (agent, mcp, telegram, health)
 ├── core/
 │   ├── config.py       # All settings — pydantic-settings

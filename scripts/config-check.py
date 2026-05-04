@@ -61,6 +61,7 @@ def print_config_check():
 
     # Integrations
     print_section("Integrations")
+    print(f"  Auth mode:          {settings.AUTH_MODE}")
     print(f"  Telegram enabled:   {settings.TELEGRAM_ENABLED}")
     if settings.TELEGRAM_ENABLED and settings.TELEGRAM_BOT_TOKEN:
         print(f"  Telegram token:     {mask_secret(settings.TELEGRAM_BOT_TOKEN)}")

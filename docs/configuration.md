@@ -61,6 +61,7 @@ limits:
 app:
   debug: false
 security:
+  auth_mode: api_key
   api_key_enabled: true
 cors:
   allowed_origins: https://staging.example.com
@@ -70,6 +71,7 @@ app:
   debug: false
   log_level: WARNING
 security:
+  auth_mode: api_key
   api_key_enabled: true
 limits:
   agent_timeout_seconds: 30
@@ -235,7 +237,11 @@ Supabase is optional and disabled by default. When enabled, repository selection
 
 | Variable | Type | Default | Description |
 |----------|------|---------|-------------|
+| `AUTH_MODE` | off/api_key/supabase_auth | off | Canonical FastAPI authentication mode; `off` is invalid in production |
 | `SECRET_KEY` | string | dev-insecure-key | Signing key (must change in production) |
+| `API_KEY` | string | (empty) | Required when `AUTH_MODE=api_key` |
+| `API_KEY_ENABLED` | bool | false | Legacy compatibility flag; prefer `AUTH_MODE` |
+| `SUPABASE_JWT_SECRET` | string | (empty) | Required when `AUTH_MODE=supabase_auth` |
 | `ALLOWED_HOSTS` | string | localhost,127.0.0.1 | Comma-separated allowed hosts |
 
 ## Environment-Specific Behavior
@@ -246,13 +252,13 @@ Supabase is optional and disabled by default. When enabled, repository selection
 - ✅ Auto-reload enabled
 - ✅ Flexible secret requirements
 - ✅ Verbose logging (DEBUG level)
-- ✅ API keys optional (can use test mode)
+- ✅ `AUTH_MODE=off` allowed for local development
 
 ### Pre-production (APP_ENV=pre)
 
 - ✅ Debug disabled
 - ✅ Auto-reload disabled
-- ⚠️ API keys should be configured
+- ⚠️ `AUTH_MODE=api_key` or `AUTH_MODE=supabase_auth` should be configured
 - ✅ Standard logging (INFO level)
 - ✅ Tests all integrations but with more flexibility than prod
 
@@ -260,7 +266,9 @@ Supabase is optional and disabled by default. When enabled, repository selection
 
 - ❌ Debug mode disabled (enforced)
 - ❌ Auto-reload disabled (enforced)
-- ❌ All API keys required
+- ❌ `AUTH_MODE=off` is rejected
+- ❌ `API_KEY` is required when `AUTH_MODE=api_key`
+- ❌ `SUPABASE_JWT_SECRET` is required when `AUTH_MODE=supabase_auth`
 - ✅ Conservative logging (WARNING level)
 - ✅ Secrets must come from environment variables
 - ✅ Strict validation on startup

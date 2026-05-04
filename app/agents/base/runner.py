@@ -5,6 +5,7 @@ from uuid import uuid4
 
 from app.agents.base.configured_agent import ConfiguredAgent
 from app.agents.base.types import TurnResult
+from app.auth.context import AuthContext
 from app.core.logging import get_logger
 from app.repositories import (
     AgentStateRecord,
@@ -35,6 +36,7 @@ class AgentRunner:
         repositories: Optional[RepositoryBundle] = None,
         persist_turns: bool = False,
         audit_service: Optional[AuditService] = None,
+        auth_context: Optional[AuthContext] = None,
     ):
         """Initialize runner with an agent.
         
@@ -43,8 +45,12 @@ class AgentRunner:
             repositories: Optional persistence repositories
             persist_turns: Whether to persist conversations, messages, and state
             audit_service: Optional audit event service
+            auth_context: Optional request auth context
         """
         self.agent = agent
+        self.auth_context = auth_context
+        if auth_context is not None:
+            self.agent.auth_context = auth_context
         self.running = False
         self.turn_results = []
         self.persist_turns = persist_turns
@@ -92,6 +98,7 @@ class AgentRunner:
                     ConversationRecord(
                         id=conversation_id,
                         agent_id=self.agent.agent_id,
+                        user_id=self.auth_context.actor_id if self.auth_context else None,
                         metadata={"agent_name": self.agent.name},
                     )
                 )
@@ -103,7 +110,10 @@ class AgentRunner:
                     conversation_id=conversation_id,
                     role="user",
                     content=user_input,
-                    metadata={"turn_index": turn_index},
+                    metadata={
+                        "turn_index": turn_index,
+                        "actor_id": self.auth_context.actor_id if self.auth_context else None,
+                    },
                 )
             )
             repositories.messages.add_message(
@@ -118,6 +128,7 @@ class AgentRunner:
                         "model_calls": result.model_calls,
                         "tool_calls": result.tool_calls,
                         "execution_time_ms": result.execution_time_ms,
+                        "actor_id": self.auth_context.actor_id if self.auth_context else None,
                     },
                 )
             )
