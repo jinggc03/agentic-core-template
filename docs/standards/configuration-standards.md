@@ -108,6 +108,7 @@ System environment variables ← highest priority
 | `SUPABASE_URL` | — | Supabase project URL |
 | `SUPABASE_ANON_KEY` | — | Supabase anon key (never commit) |
 | `SUPABASE_SERVICE_ROLE_KEY` | — | Supabase service key (never commit) |
+| `SUPABASE_DB_URL` | — | Supabase/Postgres connection string (never commit) |
 
 ---
 

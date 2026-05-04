@@ -198,7 +198,9 @@ Example output:
 | `SUPABASE_URL` | string | (empty) | Supabase project URL |
 | `SUPABASE_ANON_KEY` | string | (empty) | Supabase public key |
 | `SUPABASE_SERVICE_ROLE_KEY` | string | (empty) | Supabase service role key |
-| `DATABASE_URL` | string | (empty) | Generic database connection string |
+| `SUPABASE_DB_URL` | string | (empty) | Supabase/Postgres connection string |
+
+Supabase is optional and disabled by default. When enabled, repository selection uses Supabase-backed repositories for conversations, messages, snapshots, skill runs, audit events, and file metadata. See [standards/supabase-integration-guide.md](standards/supabase-integration-guide.md).
 
 ### MCP (Model Context Protocol)
 

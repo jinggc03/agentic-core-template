@@ -3,8 +3,9 @@
 ![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.115%2B-009688)
 ![ADK-first](https://img.shields.io/badge/ADK-first-6f42c1)
+![Supabase Optional](https://img.shields.io/badge/Supabase-optional-3ecf8e)
 ![MIT License](https://img.shields.io/badge/license-MIT-green)
-![v0.3](https://img.shields.io/badge/status-v0.3-orange)
+![v0.4](https://img.shields.io/badge/status-v0.4-orange)
 
 A reusable technical foundation for building structured, secure, and extensible AI agents with ADK-first architecture.
 
@@ -34,6 +35,7 @@ It addresses common problems:
 - MCP-ready layer for exposing tools and resources
 - Telegram bot/webhook integration with allowlist and signature checks
 - LLM provider abstraction with OpenRouter and OpenAI support
+- Optional Supabase infrastructure for Postgres persistence, RLS, Storage helpers, Auth helpers, and audit events
 - Layered configuration with `.env` secrets and versioned `params/` YAML
 - Security guardrails for API keys, CORS, host validation, safe logging, and limits
 - Integration tests, architecture docs, standards, and audit reports
@@ -56,6 +58,7 @@ Main boundaries:
 - `app/skills/` contains portable, reusable capabilities.
 - `app/mcp/` exposes tools/resources through an MCP-style layer.
 - `app/providers/` isolates LLM provider implementations.
+- `app/repositories/` provides infrastructure-neutral persistence interfaces with memory and Supabase implementations.
 - `app/core/` centralizes configuration, logging, and security.
 
 ## Quickstart
@@ -170,6 +173,7 @@ Secrets that belong in `.env`:
 - `SECRET_KEY`
 - `TELEGRAM_BOT_TOKEN`
 - `SUPABASE_SERVICE_ROLE_KEY`
+- `SUPABASE_ANON_KEY`
 - database URLs and credentials
 
 Non-secret runtime parameters that belong in `params/`:
@@ -208,7 +212,30 @@ Relevant endpoints:
 
 ### Supabase
 
-Supabase/database configuration is present as an optional integration surface. It is disabled by default and should be wired only when a concrete persistence use case exists.
+Supabase is integrated as optional infrastructure and remains disabled by default.
+
+Implemented Supabase support:
+
+- Lazy anon and service-role client factories
+- In-memory repositories for default local development
+- Supabase-backed repositories for conversations, messages, agent snapshots, skill runs, audit events, and file metadata
+- Versioned schema and baseline RLS policies under `supabase/migrations/`
+- Optional Storage helper for upload, download, and signed URLs
+- Optional Supabase Auth dependency for FastAPI routes that need Bearer-token user context
+- Optional integration tests gated by `SUPABASE_TESTS=true`
+
+Local commands:
+
+```bash
+make supabase-start
+make supabase-status
+make supabase-reset
+make supabase-stop
+```
+
+Supabase remains infrastructure, not agent logic. Agents, skills, API routes, Telegram handlers, and MCP handlers should use repository interfaces or integration services instead of importing the Supabase SDK directly.
+
+For setup and security guidance, see [docs/standards/supabase-integration-guide.md](docs/standards/supabase-integration-guide.md).
 
 ### OpenRouter / OpenAI
 
@@ -276,9 +303,18 @@ make format
 make clean
 ```
 
+Supabase local development:
+
+```bash
+make supabase-start
+make supabase-reset
+make supabase-status
+make supabase-stop
+```
+
 ## Project Status
 
-This repository is a v0.3 technical template: usable, structured, and tested, but not production-battle-tested.
+This repository is a v0.4 technical template: usable, structured, and tested, with optional Supabase persistence infrastructure, but not production-battle-tested.
 
 It is intended as a strong starting point, not a finished product. Before production use, review deployment security, observability, persistence, operational runbooks, and the specific risks of your agent domain.
 
@@ -286,7 +322,7 @@ Known template-level follow-up:
 
 - Add production-grade MCP business tools
 - Decide the removal timeline for deprecated `BaseAgent`
-- Complete or trim unused future-facing areas such as `TurnMode.AGENTIC`, `TurnMode.STREAMING`, partial snapshots, and database stubs
+- Complete or trim unused future-facing areas such as `TurnMode.AGENTIC`, `TurnMode.STREAMING`, and partial snapshots
 - Add observability and production telemetry when there is a concrete deployment target
 
 ## Reports

@@ -149,6 +149,7 @@ Provide in-memory repositories as the default implementation for tests and local
 ### SUPA-005 - Add Supabase Schema Migrations
 
 **Type:** Story  
+**Status:** Done  
 **Priority:** High  
 **Estimate:** 1.5 days
 
@@ -179,6 +180,7 @@ Add versioned Supabase migrations for core template persistence tables.
 ### SUPA-006 - Add Baseline RLS Policies
 
 **Type:** Story  
+**Status:** Done  
 **Priority:** High  
 **Estimate:** 1 day
 
@@ -203,6 +205,7 @@ Add safe baseline Row Level Security policies for the template tables.
 ### SUPA-007 - Implement Supabase Repository Layer
 
 **Type:** Story  
+**Status:** Done  
 **Priority:** High  
 **Estimate:** 2 days
 
@@ -227,6 +230,7 @@ Implement Supabase-backed repositories for core runtime persistence.
 ### SUPA-008 - Persist Agent Turns Through Repository Interfaces
 
 **Type:** Story  
+**Status:** Done  
 **Priority:** High  
 **Estimate:** 1.5 days
 
@@ -251,6 +255,7 @@ Wire the ADK runtime to optionally persist conversations, messages, turn results
 ### SUPA-009 - Add Supabase Storage Abstraction
 
 **Type:** Story  
+**Status:** Done  
 **Priority:** Medium  
 **Estimate:** 1.5 days
 
@@ -277,6 +282,7 @@ Add a storage abstraction for agent input files, with Supabase Storage as an opt
 ### SUPA-010 - Add Optional Supabase Auth Dependency
 
 **Type:** Story  
+**Status:** Done  
 **Priority:** Medium  
 **Estimate:** 1.5 days
 
@@ -301,6 +307,7 @@ Add an optional FastAPI dependency for projects that want Supabase Auth-backed m
 ### SUPA-011 - Add Audit Event Logging
 
 **Type:** Story  
+**Status:** Done  
 **Priority:** Medium  
 **Estimate:** 1 day
 
@@ -329,6 +336,7 @@ Add a template-level audit service for agent runtime events.
 ### SUPA-012 - Add Supabase Local Development Commands
 
 **Type:** Story  
+**Status:** Done  
 **Priority:** Medium  
 **Estimate:** 0.5 day
 
@@ -354,6 +362,7 @@ Add Makefile commands and docs for local Supabase workflows.
 ### SUPA-013 - Document Supabase Setup
 
 **Type:** Story  
+**Status:** Done  
 **Priority:** Medium  
 **Estimate:** 1 day
 
@@ -380,6 +389,7 @@ Create complete setup docs for using Supabase with this template.
 ### SUPA-014 - Add Optional Supabase Integration Tests
 
 **Type:** Story  
+**Status:** Done  
 **Priority:** Medium  
 **Estimate:** 1 day
 
@@ -403,6 +413,7 @@ Add integration tests that can run against a real/local Supabase instance withou
 ### SUPA-015 - Update Public Template README and Audit
 
 **Type:** Story  
+**Status:** Done  
 **Priority:** Low  
 **Estimate:** 0.5 day
 
