@@ -44,6 +44,7 @@ Agent / Skill / API route
 ### SUPA-001 - Create Supabase Integration Decision Record
 
 **Type:** Story  
+**Status:** Done  
 **Priority:** High  
 **Estimate:** 0.5 day
 
@@ -69,6 +70,7 @@ Create an ADR that defines how Supabase fits into the template: optional infrast
 ### SUPA-002 - Add Supabase Client Factory
 
 **Type:** Story  
+**Status:** Done  
 **Priority:** High  
 **Estimate:** 1 day
 
