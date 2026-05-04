@@ -96,6 +96,7 @@ Add a lazy Supabase client factory that centralizes SDK initialization and keeps
 ### SUPA-003 - Define Repository Interfaces
 
 **Type:** Story  
+**Status:** Done  
 **Priority:** High  
 **Estimate:** 1 day
 
