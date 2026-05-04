@@ -74,7 +74,7 @@ class Settings(BaseSettings):
     # LLM Provider Configuration
     # ═════════════════════════════════════════════════════════════════
 
-    LLM_PROVIDER: Literal["openrouter", "openai"] = Field(
+    LLM_PROVIDER: Literal["openrouter", "openai", "deepseek"] = Field(
         default="openrouter",
         description="LLM provider",
     )
@@ -95,6 +95,10 @@ class Settings(BaseSettings):
     OPENAI_API_KEY: str = Field(
         default="",
         description="OpenAI API key",
+    )
+    DEEPSEEK_API_KEY: str = Field(
+        default="",
+        description="DeepSeek API key",
     )
 
     # ═════════════════════════════════════════════════════════════════
@@ -247,7 +251,13 @@ class Settings(BaseSettings):
             v = v.lower().strip()
         return v or "dev"
 
-    @field_validator("LLM_API_KEY", "OPENROUTER_API_KEY", "OPENAI_API_KEY", mode="before")
+    @field_validator(
+        "LLM_API_KEY",
+        "OPENROUTER_API_KEY",
+        "OPENAI_API_KEY",
+        "DEEPSEEK_API_KEY",
+        mode="before",
+    )
     @classmethod
     def validate_api_keys(cls, v: str) -> str:
         """Normalize API keys."""
@@ -268,7 +278,12 @@ class Settings(BaseSettings):
             if self.APP_DEBUG:
                 errors.append("APP_DEBUG must be False in production")
 
-            if not self.LLM_API_KEY and not self.OPENROUTER_API_KEY and not self.OPENAI_API_KEY:
+            if (
+                not self.LLM_API_KEY
+                and not self.OPENROUTER_API_KEY
+                and not self.OPENAI_API_KEY
+                and not self.DEEPSEEK_API_KEY
+            ):
                 errors.append("LLM API key required in production")
 
             if not self.SECRET_KEY or self.SECRET_KEY == "dev-insecure-key":
@@ -285,7 +300,12 @@ class Settings(BaseSettings):
 
         # Pre-production validation - semi-strict
         elif self.APP_ENV == "pre":
-            if not self.LLM_API_KEY and not self.OPENROUTER_API_KEY and not self.OPENAI_API_KEY:
+            if (
+                not self.LLM_API_KEY
+                and not self.OPENROUTER_API_KEY
+                and not self.OPENAI_API_KEY
+                and not self.DEEPSEEK_API_KEY
+            ):
                 errors.append("LLM API key strongly recommended in pre-production")
 
         # Dev validation - flexible

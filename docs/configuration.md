@@ -175,10 +175,11 @@ Example output:
 
 | Variable | Type | Default | Description |
 |----------|------|---------|-------------|
-| `LLM_PROVIDER` | openrouter/openai | openrouter | Which LLM provider to use |
+| `LLM_PROVIDER` | openrouter/openai/deepseek | openrouter | Which LLM provider to use |
 | `LLM_MODEL` | string | meta-llama/llama-3.1-70b-instruct | Model identifier |
 | `OPENROUTER_API_KEY` | string | (empty) | OpenRouter API key |
 | `OPENAI_API_KEY` | string | (empty) | OpenAI API key |
+| `DEEPSEEK_API_KEY` | string | (empty) | DeepSeek API key |
 
 ### Integrations (Optional)
 

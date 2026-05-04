@@ -81,6 +81,7 @@ _SENSITIVE_SUBSTRINGS = {
     "SECRET_KEY",
     "OPENAI",
     "OPENROUTER",
+    "DEEPSEEK",
     "SUPABASE",
     "TOKEN",
     "PASSWORD",
@@ -166,4 +167,3 @@ def safe_repr_settings(settings_dict: dict) -> dict:
             safe_dict[key] = value
     
     return safe_dict
-

@@ -52,6 +52,7 @@ def print_config_check():
         settings.LLM_API_KEY
         or settings.OPENROUTER_API_KEY
         or settings.OPENAI_API_KEY
+        or settings.DEEPSEEK_API_KEY
     )
     if llm_key:
         print(f"  API Key configured: {mask_secret(llm_key)}")

@@ -65,9 +65,11 @@ System environment variables ← highest priority
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `LLM_PROVIDER` | `openrouter` | Provider name |
+| `LLM_PROVIDER` | `openrouter` | Provider name: `openrouter`, `openai`, or `deepseek` |
 | `LLM_MODEL` | `meta-llama/llama-3.1-8b-instruct` | Model slug |
 | `OPENROUTER_API_KEY` | — | API key (never commit) |
+| `OPENAI_API_KEY` | — | API key (never commit) |
+| `DEEPSEEK_API_KEY` | — | API key (never commit) |
 
 ### Security
 

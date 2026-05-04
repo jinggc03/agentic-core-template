@@ -34,7 +34,7 @@ It addresses common problems:
 - Portable skill system based on `BaseSkill.run(input_data: dict) -> dict`
 - MCP-ready layer for exposing tools and resources
 - Telegram bot/webhook integration with allowlist and signature checks
-- LLM provider abstraction with OpenRouter and OpenAI support
+- LLM provider abstraction with OpenRouter, OpenAI, and DeepSeek support
 - Optional Supabase infrastructure for Postgres persistence, RLS, Storage helpers, Auth helpers, and audit events
 - Layered configuration with `.env` secrets and versioned `params/` YAML
 - Security guardrails for API keys, CORS, host validation, safe logging, and limits
@@ -169,6 +169,7 @@ Secrets that belong in `.env`:
 
 - `OPENROUTER_API_KEY`
 - `OPENAI_API_KEY`
+- `DEEPSEEK_API_KEY`
 - `API_KEY`
 - `SECRET_KEY`
 - `TELEGRAM_BOT_TOKEN`
@@ -237,7 +238,7 @@ Supabase remains infrastructure, not agent logic. Agents, skills, API routes, Te
 
 For setup and security guidance, see [docs/standards/supabase-integration-guide.md](docs/standards/supabase-integration-guide.md).
 
-### OpenRouter / OpenAI
+### OpenRouter / OpenAI / DeepSeek
 
 LLM providers are selected through configuration and isolated behind the provider abstraction in `app/providers/`.
 
