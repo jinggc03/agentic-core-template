@@ -71,6 +71,19 @@ System environment variables ← highest priority
 | `OPENAI_API_KEY` | — | API key (never commit) |
 | `DEEPSEEK_API_KEY` | — | API key (never commit) |
 
+### RAG / Embeddings
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `RAG_ENABLED` | `false` | Enable RAG knowledge layer |
+| `RAG_BACKEND` | `supabase` | Backend name: `supabase` or `memory` |
+| `RAG_CHUNK_SIZE_CHARS` | `1200` | Maximum text chunk size |
+| `RAG_CHUNK_OVERLAP_CHARS` | `200` | Text chunk overlap |
+| `EMBEDDING_PROVIDER` | `openai` | Embedding provider |
+| `EMBEDDING_MODEL` | `text-embedding-3-small` | Embedding model slug |
+| `EMBEDDING_DIMENSIONS` | `1536` | Embedding vector dimensions |
+| `EMBEDDING_API_KEY` | — | Embedding API key fallback (never commit) |
+
 ### Security
 
 | Variable | Default | Description |
@@ -111,6 +124,7 @@ System environment variables ← highest priority
 | `SUPABASE_ANON_KEY` | — | Supabase anon key (never commit) |
 | `SUPABASE_SERVICE_ROLE_KEY` | — | Supabase service key (never commit) |
 | `SUPABASE_DB_URL` | — | Supabase/Postgres connection string (never commit) |
+| `EMBEDDING_API_KEY` | — | Embedding API key fallback (never commit) |
 
 ---
 

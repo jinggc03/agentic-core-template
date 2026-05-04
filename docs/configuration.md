@@ -181,6 +181,19 @@ Example output:
 | `OPENAI_API_KEY` | string | (empty) | OpenAI API key |
 | `DEEPSEEK_API_KEY` | string | (empty) | DeepSeek API key |
 
+### RAG / Knowledge Layer
+
+| Variable | Type | Default | Description |
+|----------|------|---------|-------------|
+| `RAG_ENABLED` | bool | false | Enable RAG knowledge layer |
+| `RAG_BACKEND` | memory/supabase | supabase | Vector backend for RAG |
+| `RAG_CHUNK_SIZE_CHARS` | int | 1200 | Maximum characters per text chunk |
+| `RAG_CHUNK_OVERLAP_CHARS` | int | 200 | Overlapping characters between chunks |
+| `EMBEDDING_PROVIDER` | openai | openai | Embedding provider |
+| `EMBEDDING_MODEL` | string | text-embedding-3-small | Embedding model |
+| `EMBEDDING_DIMENSIONS` | int | 1536 | Embedding vector dimensions |
+| `EMBEDDING_API_KEY` | string | (empty) | Optional embedding API key fallback |
+
 ### Integrations (Optional)
 
 #### Telegram

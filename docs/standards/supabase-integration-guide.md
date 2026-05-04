@@ -6,13 +6,14 @@ Use Supabase when a cloned project needs durable persistence, Storage, Auth-back
 
 ## Implemented Services
 
-- Supabase Postgres schema for conversations, messages, agent snapshots, skill runs, audit events, and file metadata.
+- Supabase Postgres schema for conversations, messages, agent snapshots, skill runs, audit events, file metadata, and optional RAG knowledge tables.
 - Baseline RLS policies for authenticated user-owned access.
 - Lazy anon and service-role client factories.
 - Supabase-backed repository implementations under `app/repositories/supabase.py`.
 - In-memory repositories for default local development and unit tests.
 - Optional Supabase Storage helper for upload, download, and signed URLs.
 - Optional FastAPI dependency for validating Supabase Auth Bearer tokens.
+- Optional pgvector schema, index, and `match_knowledge_chunks` RPC for RAG.
 - Optional integration tests gated behind `SUPABASE_TESTS=true`.
 
 ## Not Implemented
@@ -20,7 +21,6 @@ Use Supabase when a cloned project needs durable persistence, Storage, Auth-back
 - Realtime subscriptions.
 - Edge Functions.
 - Product-specific data models.
-- RAG/vector search.
 - Supabase Cron or Queues.
 - Frontend Supabase clients.
 
@@ -54,6 +54,10 @@ Non-secret runtime flags belong in `params/`:
 integrations:
   supabase:
     enabled: false
+
+rag:
+  enabled: false
+  backend: supabase
 ```
 
 `SUPABASE_ENABLED=false` keeps the default repository factory on in-memory repositories. Set it to `true` only when the project has valid Supabase credentials and migrations applied.
@@ -91,7 +95,7 @@ All template tables in `public` have RLS enabled.
 Baseline policies assume:
 
 - Authenticated users can read/write rows they own.
-- Ownership is represented by `user_id` on conversations and `owner_id` on files.
+- Ownership is represented by `user_id` on conversations and `owner_id` on files and knowledge records.
 - Messages, snapshots, skill runs, and audit events are scoped through conversation ownership where applicable.
 - Backend service-role operations bypass RLS and are used by the FastAPI runtime for repository writes.
 
@@ -144,6 +148,30 @@ Suggested buckets:
 
 Persist file metadata through `FileRepository`; store raw bytes in Storage.
 
+## RAG / pgvector Usage
+
+The optional RAG layer uses `knowledge_documents` and `knowledge_chunks` with `vector(1536)` embeddings. The migration also defines `match_knowledge_chunks`, an RPC used by the Supabase knowledge repository.
+
+Apply migrations locally:
+
+```bash
+make supabase-reset
+```
+
+Enable Supabase-backed RAG:
+
+```yaml
+integrations:
+  supabase:
+    enabled: true
+
+rag:
+  enabled: true
+  backend: supabase
+```
+
+Keep `SUPABASE_SERVICE_ROLE_KEY` backend-only. User-facing products should review RLS ownership before exposing knowledge tables through the Supabase Data API.
+
 ## Auth Usage
 
 Supabase Auth is optional. Existing `X-API-Key` backend auth remains unchanged.
@@ -173,6 +201,7 @@ Optional real/local Supabase integration tests:
 
 ```bash
 SUPABASE_TESTS=true SUPABASE_ENABLED=true python -m pytest tests/integration -q
+SUPABASE_TESTS=true RAG_TESTS=true RAG_ENABLED=true SUPABASE_ENABLED=true python -m pytest tests/integration/test_supabase_rag.py -q
 ```
 
 These tests require a configured Supabase project or local stack with migrations applied.

@@ -45,6 +45,17 @@ integrations:
     enabled: false
     server_name: personal-agent-runtime
 
+rag:
+  enabled: false
+  backend: supabase       # supabase | memory
+  chunk_size_chars: 1200
+  chunk_overlap_chars: 200
+
+embeddings:
+  provider: openai
+  model: text-embedding-3-small
+  dimensions: 1536
+
 features:
   allow_agent_registration: true
   enable_metrics: false

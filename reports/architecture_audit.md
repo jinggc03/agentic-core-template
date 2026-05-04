@@ -9,12 +9,12 @@
 
 | Dimension | Score | Status |
 |-----------|-------|--------|
-| Overall quality | 4.6/5 | Solid, coherent template for real use |
+| Overall quality | 4.7/5 | Solid, coherent template for real use |
 | Simplicity (KISS) | 4.0/5 | Critical debt reduced; main path is clearer |
 | SOLID | 4.1/5 | Repository boundaries isolate infrastructure from agent logic |
 | YAGNI | 3.6/5 | Supabase is optional and disabled by default; some future-facing modes remain |
 | Developer Experience | 4.6/5 | Stable contracts, local commands, and clearer onboarding |
-| Scalability | 4.6/5 | Durable persistence path is available without coupling agents |
+| Scalability | 4.7/5 | Durable persistence and optional RAG paths are available without coupling agents |
 
 Verdict: the repository is now in **v0.4 = solid, secure, coherent template with optional Supabase infrastructure and controlled debt**. The highest-impact hardening and persistence foundation items are closed without regressions.
 
@@ -56,6 +56,7 @@ Verdict: the repository is now in **v0.4 = solid, secure, coherent template with
 | Supabase setup guide | Done |
 | Optional integration tests | Done |
 | README and audit update | Done |
+| Optional RAG knowledge layer | Done |
 
 ---
 
@@ -89,7 +90,7 @@ Verdict: the repository is now in **v0.4 = solid, secure, coherent template with
 
 ## 4. Verification and Testing
 
-- Current test suite result: **128 passed, 1 skipped**.
+- Current test suite result: **144 passed, 2 skipped**.
 - No known regression failures after hardening.
 - Deprecation warnings from `datetime.utcnow()` were removed.
 - `BaseAgent` deprecation is now asserted in compatibility tests instead of leaking into the warning summary.
@@ -106,6 +107,7 @@ Verdict: the repository is now in **v0.4 = solid, secure, coherent template with
 - Supabase service-role access is isolated to backend factories/repositories.
 - Baseline RLS policies are versioned with schema migrations.
 - Audit payloads are sanitized before persistence.
+- RAG vector search is exposed through `KnowledgeSearchSkill` and repository interfaces, not direct agent/database access.
 
 ### Remaining
 - Define the operational contract for Telegram signature headers in deployment docs: expected headers, timestamp tolerance, and troubleshooting.
@@ -145,6 +147,7 @@ Non-blocking debt remains:
 | Legacy `BaseAgent` path | Medium | Medium | Controlled through deprecation and docs |
 | Integration coverage remains focused | Low-Medium | Medium | Load, retry, and external failure scenarios are still future work |
 | Supabase RLS assumptions may not fit every cloned product | Medium | Medium | Baseline policies must be reviewed for each product ownership model |
+| RAG quality depends on product-specific chunking and retrieval tuning | Medium | Medium | Template ships conservative defaults only |
 
 ---
 
@@ -183,7 +186,8 @@ Non-blocking debt remains:
 - `app/mcp/server.py` is not empty: **Done**.
 - `ALLOWED_HOSTS` implemented or documented: **Done** (implemented).
 - CORS headers restricted: **Done**.
-- All tests pass: **Done** (128 passed, 1 skipped optional Supabase integration test).
+- All tests pass: **Done** (144 passed, 2 skipped optional integration tests).
+- Optional RAG tests pass without Supabase credentials: **Done**.
 - Report updated in English: **Done**.
 - "Evolution Since v0.2" section added: **Done**.
 
@@ -251,6 +255,7 @@ Recommendation: approve v0.4 for real template use and continue with controlled 
 - `AgentRunner` can persist conversations, messages, turn metadata, and state through repository interfaces.
 - Supabase Storage helper added for upload, download, and signed URLs.
 - Optional Supabase Auth dependency added for route-level Bearer token validation.
+- Optional RAG knowledge layer added with OpenAI embeddings and Supabase pgvector.
 - Audit service added with payload secret redaction.
 - Local Supabase Makefile commands added.
 - Optional Supabase integration tests added behind `SUPABASE_TESTS=true`.
@@ -259,6 +264,7 @@ Recommendation: approve v0.4 for real template use and continue with controlled 
 ### Quality Impact
 
 - Cloned projects can start with durable persistence without rewriting architecture.
+- Cloned projects can start with text-based RAG without coupling agents to pgvector.
 - Agents, skills, routes, Telegram, and MCP remain isolated from the Supabase SDK.
 - Default test and local development paths still work without Supabase credentials.
 - Security posture improved through RLS baseline, service-role isolation, and audit redaction.
@@ -267,5 +273,6 @@ Recommendation: approve v0.4 for real template use and continue with controlled 
 
 - RLS policies are safe baseline defaults, not a substitute for product-specific authorization design.
 - Optional integration tests require a real/local Supabase instance and are skipped by default.
-- Realtime, Edge Functions, pgvector/RAG, Cron, and Queues remain intentionally out of scope.
+- Realtime, Edge Functions, Cron, and Queues remain intentionally out of scope.
+- PDF parsing, crawling, reranking, hybrid search, and advanced RAG evaluation remain intentionally out of scope.
 - `BaseAgent` is still deprecated but not removed.

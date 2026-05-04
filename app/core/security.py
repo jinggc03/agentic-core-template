@@ -86,6 +86,7 @@ _SENSITIVE_SUBSTRINGS = {
     "TOKEN",
     "PASSWORD",
     "SECRET",
+    "EMBEDDING",
 }
 
 

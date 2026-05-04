@@ -36,6 +36,7 @@ It addresses common problems:
 - Telegram bot/webhook integration with allowlist and signature checks
 - LLM provider abstraction with OpenRouter, OpenAI, and DeepSeek support
 - Optional Supabase infrastructure for Postgres persistence, RLS, Storage helpers, Auth helpers, and audit events
+- Optional RAG knowledge layer with OpenAI embeddings and Supabase pgvector support
 - Layered configuration with `.env` secrets and versioned `params/` YAML
 - Security guardrails for API keys, CORS, host validation, safe logging, and limits
 - Integration tests, architecture docs, standards, and audit reports
@@ -59,6 +60,7 @@ Main boundaries:
 - `app/mcp/` exposes tools/resources through an MCP-style layer.
 - `app/providers/` isolates LLM provider implementations.
 - `app/repositories/` provides infrastructure-neutral persistence interfaces with memory and Supabase implementations.
+- `app/knowledge/` provides optional RAG ingestion and semantic retrieval contracts.
 - `app/core/` centralizes configuration, logging, and security.
 
 ## Quickstart
@@ -170,6 +172,7 @@ Secrets that belong in `.env`:
 - `OPENROUTER_API_KEY`
 - `OPENAI_API_KEY`
 - `DEEPSEEK_API_KEY`
+- `EMBEDDING_API_KEY`
 - `API_KEY`
 - `SECRET_KEY`
 - `TELEGRAM_BOT_TOKEN`
@@ -185,6 +188,7 @@ Non-secret runtime parameters that belong in `params/`:
 - feature flags
 - execution limits
 - enabled/disabled integrations
+- RAG backend, embedding model, and chunking parameters
 
 For complete details, see [docs/configuration.md](docs/configuration.md) and [docs/standards/configuration-standards.md](docs/standards/configuration-standards.md).
 
@@ -211,6 +215,30 @@ Relevant endpoints:
 - `GET /api/mcp/resources`
 - `POST /api/mcp/tools/call`
 
+### RAG / Knowledge Layer
+
+The template includes an optional RAG layer for projects that need retrieval over project knowledge without coupling agents to a vector database.
+
+Implemented RAG support:
+
+- `KnowledgeSearchSkill` with `ingest_text` and `query` operations
+- OpenAI embeddings via `text-embedding-3-small`
+- In-memory knowledge repository for tests and local development
+- Supabase pgvector repository for durable vector search
+- Versioned pgvector migration and `match_knowledge_chunks` RPC
+
+RAG is disabled by default. To enable it locally with the in-memory fallback:
+
+```yaml
+rag:
+  enabled: true
+  backend: supabase
+```
+
+Set either `EMBEDDING_API_KEY` or `OPENAI_API_KEY` in `.env`.
+
+For setup and usage, see [docs/standards/rag-integration-guide.md](docs/standards/rag-integration-guide.md).
+
 ### Supabase
 
 Supabase is integrated as optional infrastructure and remains disabled by default.
@@ -220,6 +248,7 @@ Implemented Supabase support:
 - Lazy anon and service-role client factories
 - In-memory repositories for default local development
 - Supabase-backed repositories for conversations, messages, agent snapshots, skill runs, audit events, and file metadata
+- Supabase pgvector schema for optional RAG knowledge retrieval
 - Versioned schema and baseline RLS policies under `supabase/migrations/`
 - Optional Storage helper for upload, download, and signed URLs
 - Optional Supabase Auth dependency for FastAPI routes that need Bearer-token user context

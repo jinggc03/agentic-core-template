@@ -148,6 +148,43 @@ class Settings(BaseSettings):
     )
 
     # ═════════════════════════════════════════════════════════════════
+    # RAG / Knowledge Configuration (Optional)
+    # ═════════════════════════════════════════════════════════════════
+
+    RAG_ENABLED: bool = Field(
+        default=False,
+        description="Enable RAG knowledge layer",
+    )
+    RAG_BACKEND: Literal["memory", "supabase"] = Field(
+        default="supabase",
+        description="RAG vector backend",
+    )
+    RAG_CHUNK_SIZE_CHARS: int = Field(
+        default=1200,
+        description="Maximum characters per RAG text chunk",
+    )
+    RAG_CHUNK_OVERLAP_CHARS: int = Field(
+        default=200,
+        description="Overlapping characters between RAG chunks",
+    )
+    EMBEDDING_PROVIDER: Literal["openai"] = Field(
+        default="openai",
+        description="Embedding provider",
+    )
+    EMBEDDING_MODEL: str = Field(
+        default="text-embedding-3-small",
+        description="Embedding model identifier",
+    )
+    EMBEDDING_DIMENSIONS: int = Field(
+        default=1536,
+        description="Embedding vector dimensions",
+    )
+    EMBEDDING_API_KEY: str = Field(
+        default="",
+        description="Generic embedding API key",
+    )
+
+    # ═════════════════════════════════════════════════════════════════
     # MCP Configuration (Model Context Protocol)
     # ═════════════════════════════════════════════════════════════════
 
@@ -256,6 +293,7 @@ class Settings(BaseSettings):
         "OPENROUTER_API_KEY",
         "OPENAI_API_KEY",
         "DEEPSEEK_API_KEY",
+        "EMBEDDING_API_KEY",
         mode="before",
     )
     @classmethod
@@ -297,6 +335,11 @@ class Settings(BaseSettings):
                     errors.append("SUPABASE_URL required if SUPABASE_ENABLED")
                 if not self.SUPABASE_ANON_KEY:
                     errors.append("SUPABASE_ANON_KEY required if SUPABASE_ENABLED")
+            if self.RAG_ENABLED:
+                if not self.EMBEDDING_API_KEY and not self.OPENAI_API_KEY:
+                    errors.append("OPENAI_API_KEY or EMBEDDING_API_KEY required if RAG_ENABLED")
+                if self.RAG_BACKEND == "supabase" and not self.SUPABASE_ENABLED:
+                    errors.append("SUPABASE_ENABLED required when RAG_BACKEND=supabase in production")
 
         # Pre-production validation - semi-strict
         elif self.APP_ENV == "pre":
@@ -399,6 +442,17 @@ class Settings(BaseSettings):
 
             sb = integ.get("supabase", {})
             if "enabled" in sb: flat["SUPABASE_ENABLED"] = sb["enabled"]
+
+            rag = data.get("rag", {})
+            if "enabled" in rag: flat["RAG_ENABLED"] = rag["enabled"]
+            if "backend" in rag: flat["RAG_BACKEND"] = str(rag["backend"])
+            if "chunk_size_chars" in rag: flat["RAG_CHUNK_SIZE_CHARS"] = int(rag["chunk_size_chars"])
+            if "chunk_overlap_chars" in rag: flat["RAG_CHUNK_OVERLAP_CHARS"] = int(rag["chunk_overlap_chars"])
+
+            embeddings = data.get("embeddings", {})
+            if "provider" in embeddings: flat["EMBEDDING_PROVIDER"] = str(embeddings["provider"])
+            if "model" in embeddings: flat["EMBEDDING_MODEL"] = str(embeddings["model"])
+            if "dimensions" in embeddings: flat["EMBEDDING_DIMENSIONS"] = int(embeddings["dimensions"])
 
             mcp = integ.get("mcp", {})
             if "enabled"     in mcp: flat["MCP_ENABLED"]     = mcp["enabled"]

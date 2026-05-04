@@ -71,6 +71,12 @@ def print_config_check():
     if settings.SUPABASE_ENABLED:
         print(f"  Supabase URL:       {'✓ configured' if settings.SUPABASE_URL else '⚠️  NOT SET'}")
         print(f"  Supabase key:       {'✓ configured' if settings.SUPABASE_ANON_KEY else '⚠️  NOT SET'}")
+    print(f"  RAG enabled:        {settings.RAG_ENABLED}")
+    if settings.RAG_ENABLED:
+        print(f"  RAG backend:        {settings.RAG_BACKEND}")
+        print(f"  Embedding provider: {settings.EMBEDDING_PROVIDER}")
+        embedding_key = settings.EMBEDDING_API_KEY or settings.OPENAI_API_KEY
+        print(f"  Embedding key:      {'✓ configured' if embedding_key else '⚠️  NOT SET'}")
 
     # Features
     print_section("Features")
