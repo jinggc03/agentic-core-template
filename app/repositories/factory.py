@@ -23,9 +23,9 @@ def _get_settings() -> Any:
 def get_repository_bundle(settings: Any | None = None) -> RepositoryBundle:
     """Return the configured repository bundle.
 
-    Supabase-backed repositories are introduced in a later card. Until then,
-    disabled Supabase uses the in-memory implementation and enabled Supabase
-    fails clearly instead of pretending persistence is wired.
+    Disabled Supabase uses in-memory repositories so the template remains
+    clone-and-run friendly. Enabled Supabase selects the service-role repository
+    implementation and still initializes lazily.
     """
     global _repository_bundle
 
@@ -40,10 +40,12 @@ def get_repository_bundle(settings: Any | None = None) -> RepositoryBundle:
             _repository_bundle = bundle
         return bundle
 
-    raise RepositoryConfigurationError(
-        "Supabase repositories are not implemented yet. Keep SUPABASE_ENABLED=false "
-        "or implement SUPA-007 before selecting Supabase-backed repositories."
-    )
+    from app.repositories.supabase import create_supabase_repository_bundle
+
+    bundle = create_supabase_repository_bundle()
+    if settings is None:
+        _repository_bundle = bundle
+    return bundle
 
 
 def reset_repository_bundle() -> None:

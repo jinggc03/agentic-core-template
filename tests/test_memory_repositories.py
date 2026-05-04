@@ -15,7 +15,6 @@ from app.repositories import (
     get_repository_bundle,
     reset_repository_bundle,
 )
-from app.repositories.factory import RepositoryConfigurationError
 
 
 @pytest.fixture(autouse=True)
@@ -131,13 +130,18 @@ def test_repository_factory_caches_default_bundle(monkeypatch):
     assert first is second
 
 
-def test_repository_factory_rejects_supabase_until_implementation_exists():
+def test_repository_factory_selects_supabase_when_enabled(monkeypatch):
     settings = Settings(
         SUPABASE_ENABLED=True,
         SUPABASE_URL="https://example.supabase.co",
         SUPABASE_ANON_KEY="anon-key",
         SUPABASE_SERVICE_ROLE_KEY="service-key",
     )
+    expected_bundle = create_memory_repository_bundle()
 
-    with pytest.raises(RepositoryConfigurationError, match="Supabase repositories are not implemented"):
-        get_repository_bundle(settings=settings)
+    monkeypatch.setattr(
+        "app.repositories.supabase.create_supabase_repository_bundle",
+        lambda: expected_bundle,
+    )
+
+    assert get_repository_bundle(settings=settings) is expected_bundle

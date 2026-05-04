@@ -21,6 +21,7 @@ from app.repositories.factory import (
     reset_repository_bundle,
 )
 from app.repositories.memory import create_memory_repository_bundle
+from app.repositories.supabase import create_supabase_repository_bundle
 
 __all__ = [
     "AgentStateRecord",
@@ -38,6 +39,7 @@ __all__ = [
     "SkillRunRecord",
     "SkillRunRepository",
     "create_memory_repository_bundle",
+    "create_supabase_repository_bundle",
     "get_repository_bundle",
     "reset_repository_bundle",
 ]
