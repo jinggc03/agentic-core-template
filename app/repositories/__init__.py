@@ -15,6 +15,12 @@ from app.repositories.base import (
     SkillRunRecord,
     SkillRunRepository,
 )
+from app.repositories.factory import (
+    RepositoryConfigurationError,
+    get_repository_bundle,
+    reset_repository_bundle,
+)
+from app.repositories.memory import create_memory_repository_bundle
 
 __all__ = [
     "AgentStateRecord",
@@ -28,6 +34,10 @@ __all__ = [
     "MessageRecord",
     "MessageRepository",
     "RepositoryBundle",
+    "RepositoryConfigurationError",
     "SkillRunRecord",
     "SkillRunRepository",
+    "create_memory_repository_bundle",
+    "get_repository_bundle",
+    "reset_repository_bundle",
 ]

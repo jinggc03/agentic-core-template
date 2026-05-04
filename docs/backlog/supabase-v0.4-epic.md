@@ -125,6 +125,7 @@ Introduce repository interfaces that represent template-level persistence needs 
 ### SUPA-004 - Add In-Memory Repository Implementations
 
 **Type:** Story  
+**Status:** Done  
 **Priority:** High  
 **Estimate:** 1 day
 
