@@ -3,6 +3,7 @@
 import time
 import asyncio
 from typing import Optional, List
+from app.auth.context import AuthContext
 from app.agents.base.types import (
     TurnContext,
     TurnResult,
@@ -57,6 +58,7 @@ class ConfiguredAgent:
         provider: Optional[BaseLLMProvider] = None,
         policy_enforcer: Optional[PolicyEnforcer] = None,
         conversation_id: Optional[str] = None,
+        auth_context: Optional[AuthContext] = None,
     ):
         """Initialize configured agent.
         
@@ -67,6 +69,7 @@ class ConfiguredAgent:
             provider: LLM provider (uses factory default if None)
             policy_enforcer: Execution policy enforcer
             conversation_id: Conversation ID for context
+            auth_context: Optional request auth context
         """
         self.agent_id = agent_id
         self.name = name
@@ -74,6 +77,7 @@ class ConfiguredAgent:
         self.provider = provider or get_llm_provider()
         self.policy_enforcer = policy_enforcer or PolicyEnforcer(get_default_policy())
         self.conversation_id = conversation_id or f"{agent_id}-{int(time.time())}"
+        self.auth_context = auth_context
         
         # State
         self.messages: List[Message] = []

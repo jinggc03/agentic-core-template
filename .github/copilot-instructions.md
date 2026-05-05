@@ -15,7 +15,8 @@
 
 ## Security non-negotiables
 
-- All `POST` endpoints under `/api/agents/*` and `/api/mcp/*` must include `_: str = Depends(require_api_key)`
+- Protected endpoints under `/api/agents/*`, `/api/mcp/*`, and non-webhook Telegram routes must include `auth_context: AuthContext = Depends(get_auth_context)`
+- `POST /api/telegram/webhook` is the explicit exception and must keep Telegram signature plus allowlist security
 - CORS `allow_origins` must never include `"*"`
 - Secrets must never appear in logs — use `mask_secret()` or `safe_repr_settings()`
 - Non-secret config variables must be added to `params/base/params.yml` (and env overrides as needed); secret variables must appear in `.env.example`
@@ -70,7 +71,7 @@
 - Do not widen execution limits without documenting the justification in `docs/decisions/`
 - Do not add `allow_origins=["*"]` anywhere
 - Do not print or log `settings.API_KEY`, `settings.TELEGRAM_BOT_TOKEN`, or any `*_KEY` / `*_SECRET` / `*_TOKEN` field
-- Do not bypass `require_api_key` on protected endpoints
+- Do not bypass `get_auth_context` on protected endpoints
 - Do not modify `app/agents/base/` unless implementing a framework feature (not an agent feature)
 - Do not hardcode model names — use `settings.LLM_MODEL`
 
@@ -96,13 +97,17 @@ class MyAgent(ConfiguredAgent):
 ### Adding a protected endpoint
 
 ```python
-from app.api.deps import require_api_key
+from app.api.deps import get_auth_context
+from app.auth.context import AuthContext
 from fastapi import APIRouter, Depends
 
 router = APIRouter()
 
 @router.post("/my-endpoint")
-async def my_handler(request: MyRequest, _: str = Depends(require_api_key)):
+async def my_handler(
+    request: MyRequest,
+    auth_context: AuthContext = Depends(get_auth_context),
+):
     ...
 ```
 

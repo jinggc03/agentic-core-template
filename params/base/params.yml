@@ -28,10 +28,11 @@ server:
   reload: true
 
 llm:
-  provider: openrouter   # openrouter | openai
+  provider: openrouter   # openrouter | openai | deepseek
   model: meta-llama/llama-3.1-70b-instruct
 
 security:
+  auth_mode: off          # off | api_key | supabase_auth
   api_key_enabled: false
   cors_allowed_origins: "http://localhost:3000,http://localhost:8000"
   allowed_hosts: "localhost,127.0.0.1"
@@ -44,6 +45,17 @@ integrations:
   mcp:
     enabled: false
     server_name: personal-agent-runtime
+
+rag:
+  enabled: false
+  backend: supabase       # supabase | memory
+  chunk_size_chars: 1200
+  chunk_overlap_chars: 200
+
+embeddings:
+  provider: openai
+  model: text-embedding-3-small
+  dimensions: 1536
 
 features:
   allow_agent_registration: true

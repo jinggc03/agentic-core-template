@@ -12,7 +12,7 @@ MCP (Model Context Protocol) is the **external exposure layer** for agent skills
 External client
     │
     ▼
-POST /api/mcp/tools/call   ← protected by X-API-Key
+POST /api/mcp/tools/call   ← protected by AUTH_MODE
     │
     ▼
 MCPToolCallRequest
@@ -24,7 +24,7 @@ Skill (app/skills/...)
 Result dict
 ```
 
-The MCP endpoints in `app/api/routes/mcp.py` are the only entry point. All POST routes require the `X-API-Key` header. GET routes (info, list tools, list resources) are public.
+The MCP endpoints in `app/api/routes/mcp.py` are the only entry point. Protected routes use `get_auth_context`, so deployments can choose `AUTH_MODE=api_key` or `AUTH_MODE=supabase_auth`.
 
 ---
 
@@ -65,7 +65,7 @@ In `app/api/routes/mcp.py`, the `call_mcp_tool` handler dispatches to the regist
 @router.post("/tools/call", tags=["mcp"])
 async def call_mcp_tool(
     request: MCPToolCallRequest,
-    _: str = Depends(require_api_key),
+    auth_context: AuthContext = Depends(get_auth_context),
 ):
     tool = TOOL_REGISTRY.get(request.tool_name)
     if not tool:
@@ -102,22 +102,26 @@ result = await skill.run(query=args.query, max_results=args.max_results)
 
 ## Protecting endpoints
 
-All POST MCP routes **must** include the API key dependency:
+All protected MCP routes **must** include the auth context dependency:
 
 ```python
-from app.api.deps import require_api_key
+from app.api.deps import get_auth_context
+from app.auth.context import AuthContext
 from fastapi import Depends
 
 @router.post("/tools/call")
-async def call_mcp_tool(request: ..., _: str = Depends(require_api_key)):
+async def call_mcp_tool(
+    request: ...,
+    auth_context: AuthContext = Depends(get_auth_context),
+):
     ...
 ```
 
-GET routes (discovery) may remain public:
+Discovery routes in this template are protected by default. Only keep discovery public when there is an explicit product requirement and a security review:
 
 ```python
 @router.get("/tools")
-async def list_tools():  # No auth required — tool list is not sensitive
+async def list_tools(auth_context: AuthContext = Depends(get_auth_context)):
     ...
 ```
 
@@ -125,11 +129,14 @@ async def list_tools():  # No auth required — tool list is not sensitive
 
 ## Exposing resources
 
-Resources (read-only data sources) follow the same pattern but use GET endpoints and do not require authentication:
+Resources follow the same protected route pattern:
 
 ```python
 @router.get("/resources/{resource_name}")
-async def get_resource(resource_name: str):
+async def get_resource(
+    resource_name: str,
+    auth_context: AuthContext = Depends(get_auth_context),
+):
     ...
 ```
 

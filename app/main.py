@@ -20,7 +20,7 @@ async def lifespan(app: FastAPI):
     logger.info(f"Starting {settings.APP_NAME} [env={settings.APP_ENV}]")
     logger.info(f"LLM Provider: {settings.LLM_PROVIDER}")
     logger.info(f"LLM Model: {settings.LLM_MODEL}")
-    logger.info(f"API key enforcement: {settings.API_KEY_ENABLED}")
+    logger.info(f"Auth mode: {settings.AUTH_MODE}")
     if settings.TELEGRAM_ENABLED:
         allowlist_set = bool(settings.TELEGRAM_ALLOWED_USER_IDS.strip())
         logger.info(f"Telegram enabled | allowlist set: {allowlist_set}")

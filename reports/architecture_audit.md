@@ -1,7 +1,7 @@
-# Architecture Audit - agentic-core-template (v0.3)
+# Architecture Audit - agentic-core-template (v0.4)
 
-> Date: April 2026  
-> Scope: post-v0.2 technical hardening (security, integration tests, minimal YAGNI cleanup)
+> Date: May 2026  
+> Scope: post-v0.3 Supabase integration hardening and documentation update
 
 ---
 
@@ -9,14 +9,14 @@
 
 | Dimension | Score | Status |
 |-----------|-------|--------|
-| Overall quality | 4.4/5 | Solid, coherent template for real use |
+| Overall quality | 4.7/5 | Solid, coherent template for real use |
 | Simplicity (KISS) | 4.0/5 | Critical debt reduced; main path is clearer |
-| SOLID | 3.7/5 | Good abstractions, with some SRP follow-up remaining |
-| YAGNI | 3.3/5 | Minimal debt cleanup completed; non-blocking stubs remain |
-| Developer Experience | 4.4/5 | Stable contracts and clearer onboarding |
-| Scalability | 4.4/5 | Layered foundation is ready to evolve |
+| SOLID | 4.1/5 | Repository boundaries isolate infrastructure from agent logic |
+| YAGNI | 3.6/5 | Supabase is optional and disabled by default; some future-facing modes remain |
+| Developer Experience | 4.6/5 | Stable contracts, local commands, and clearer onboarding |
+| Scalability | 4.7/5 | Durable persistence and optional RAG paths are available without coupling agents |
 
-Verdict: the repository is now in **v0.3 = solid, secure, coherent template with controlled debt**. The highest-impact hardening items are closed without regressions.
+Verdict: the repository is now in **v0.4 = solid, secure, coherent template with optional Supabase infrastructure and controlled debt**. The highest-impact hardening and persistence foundation items are closed without regressions.
 
 ---
 
@@ -36,6 +36,27 @@ Verdict: the repository is now in **v0.3 = solid, secure, coherent template with
 | Restricted CORS headers | Done |
 | Audit report in English | Done |
 | "Evolution Since v0.2" section | Done |
+
+## 2.1 Supabase Integration Status (v0.4)
+
+| Item | Status |
+|------|--------|
+| Supabase ADR | Done |
+| Lazy Supabase client factory | Done |
+| Repository interfaces | Done |
+| In-memory repositories | Done |
+| Supabase schema migrations | Done |
+| Baseline RLS policies | Done |
+| Supabase repository layer | Done |
+| Optional agent turn persistence | Done |
+| Storage abstraction | Done |
+| Optional Supabase Auth dependency | Done |
+| Audit service | Done |
+| Local Supabase Makefile commands | Done |
+| Supabase setup guide | Done |
+| Optional integration tests | Done |
+| README and audit update | Done |
+| Optional RAG knowledge layer | Done |
 
 ---
 
@@ -69,7 +90,7 @@ Verdict: the repository is now in **v0.3 = solid, secure, coherent template with
 
 ## 4. Verification and Testing
 
-- Current test suite result: **95 passed**.
+- Current test suite result: **144 passed, 2 skipped**.
 - No known regression failures after hardening.
 - Deprecation warnings from `datetime.utcnow()` were removed.
 - `BaseAgent` deprecation is now asserted in compatibility tests instead of leaking into the warning summary.
@@ -83,6 +104,10 @@ Verdict: the repository is now in **v0.3 = solid, secure, coherent template with
 - Restricted CORS headers.
 - Existing API key and Telegram allowlist checks preserved.
 - Host header enforcement via `ALLOWED_HOSTS`.
+- Supabase service-role access is isolated to backend factories/repositories.
+- Baseline RLS policies are versioned with schema migrations.
+- Audit payloads are sanitized before persistence.
+- RAG vector search is exposed through `KnowledgeSearchSkill` and repository interfaces, not direct agent/database access.
 
 ### Remaining
 - Define the operational contract for Telegram signature headers in deployment docs: expected headers, timestamp tolerance, and troubleshooting.
@@ -106,7 +131,6 @@ Verdict: the repository is now in **v0.3 = solid, secure, coherent template with
 ## 7. YAGNI and Current Debt
 
 Non-blocking debt remains:
-- `app/db/` is still a stub.
 - `TurnMode.AGENTIC` and `TurnMode.STREAMING` are defined but not operationally used.
 - `Snapshot` has partial lifecycle integration.
 - MCP exposes transport endpoints, but still has limited business tools.
@@ -122,6 +146,8 @@ Non-blocking debt remains:
 | YAGNI debt in stubs and unused modes | Medium | Medium | Can confuse onboarding if left unexplained |
 | Legacy `BaseAgent` path | Medium | Medium | Controlled through deprecation and docs |
 | Integration coverage remains focused | Low-Medium | Medium | Load, retry, and external failure scenarios are still future work |
+| Supabase RLS assumptions may not fit every cloned product | Medium | Medium | Baseline policies must be reviewed for each product ownership model |
+| RAG quality depends on product-specific chunking and retrieval tuning | Medium | Medium | Template ships conservative defaults only |
 
 ---
 
@@ -143,6 +169,8 @@ Non-blocking debt remains:
 
 7. Expand e2e tests with external failure and retry scenarios.
 8. Revisit the future-scope flags when there is a concrete metrics or dynamic registration implementation.
+9. Add product-specific Supabase policies and migrations in cloned projects.
+10. Add cleanup to optional integration tests if projects use long-lived shared test databases.
 
 ---
 
@@ -158,7 +186,8 @@ Non-blocking debt remains:
 - `app/mcp/server.py` is not empty: **Done**.
 - `ALLOWED_HOSTS` implemented or documented: **Done** (implemented).
 - CORS headers restricted: **Done**.
-- All tests pass: **Done** (95 passed).
+- All tests pass: **Done** (144 passed, 2 skipped optional integration tests).
+- Optional RAG tests pass without Supabase credentials: **Done**.
 - Report updated in English: **Done**.
 - "Evolution Since v0.2" section added: **Done**.
 
@@ -166,9 +195,9 @@ Non-blocking debt remains:
 
 ## 11. Conclusion
 
-The v0.3 hardening work meets its objective: the template is more secure, better tested, and clearer for future users. The next version should focus on MCP functional value, planned `BaseAgent` removal, and reducing remaining YAGNI debt.
+The v0.4 Supabase work meets its objective: the template now has optional persistence, Storage/Auth helpers, audit logging, local Supabase workflows, and documentation without coupling agents to Supabase.
 
-Recommendation: approve v0.3 for real template use and continue with controlled follow-up work.
+Recommendation: approve v0.4 for real template use and continue with controlled follow-up work.
 
 ---
 
@@ -209,5 +238,41 @@ Recommendation: approve v0.3 for real template use and continue with controlled 
 
 - Deprecated `BaseAgent` compatibility code still exists.
 - MCP still needs business-ready tools.
-- YAGNI components remain: `db` stubs, unused modes, partial snapshots.
+- YAGNI components remain: unused modes and partial snapshots.
 - Template placeholder flags remain intentionally registered but inactive.
+
+---
+
+## 14. Evolution Since v0.3
+
+### Changes Completed
+
+- Supabase integration ADR added.
+- Lazy Supabase client factory added.
+- Repository interfaces and in-memory implementations added.
+- Supabase schema migration and baseline RLS policies added.
+- Supabase-backed repositories added for core runtime persistence.
+- `AgentRunner` can persist conversations, messages, turn metadata, and state through repository interfaces.
+- Supabase Storage helper added for upload, download, and signed URLs.
+- Optional Supabase Auth dependency added for route-level Bearer token validation.
+- Optional RAG knowledge layer added with OpenAI embeddings and Supabase pgvector.
+- Audit service added with payload secret redaction.
+- Local Supabase Makefile commands added.
+- Optional Supabase integration tests added behind `SUPABASE_TESTS=true`.
+- Public README and Supabase setup docs updated.
+
+### Quality Impact
+
+- Cloned projects can start with durable persistence without rewriting architecture.
+- Cloned projects can start with text-based RAG without coupling agents to pgvector.
+- Agents, skills, routes, Telegram, and MCP remain isolated from the Supabase SDK.
+- Default test and local development paths still work without Supabase credentials.
+- Security posture improved through RLS baseline, service-role isolation, and audit redaction.
+
+### Remaining Debt
+
+- RLS policies are safe baseline defaults, not a substitute for product-specific authorization design.
+- Optional integration tests require a real/local Supabase instance and are skipped by default.
+- Realtime, Edge Functions, Cron, and Queues remain intentionally out of scope.
+- PDF parsing, crawling, reranking, hybrid search, and advanced RAG evaluation remain intentionally out of scope.
+- `BaseAgent` is still deprecated but not removed.

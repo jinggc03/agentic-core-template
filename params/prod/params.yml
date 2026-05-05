@@ -16,6 +16,7 @@ server:
   reload: false       # base: true
 
 security:
+  auth_mode: api_key                                      # base: off
   api_key_enabled: true                                   # base: false
   cors_allowed_origins: "https://your-production-domain.com"  # base: localhost
 
@@ -30,4 +31,3 @@ features:
 
 limits:
   agent_timeout_seconds: 30        # base: 60
-

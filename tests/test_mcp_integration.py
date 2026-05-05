@@ -17,6 +17,7 @@ def client():
 def test_mcp_tool_call_requires_api_key_when_enabled(client):
     """POST /api/mcp/tools/call should enforce API key when enabled."""
     with patch("app.core.config.settings") as s:
+        s.AUTH_MODE = "api_key"
         s.API_KEY_ENABLED = True
         s.API_KEY = "secret"
 
@@ -46,6 +47,7 @@ def test_mcp_tool_call_response_format(client):
 
     with patch("app.api.routes.mcp.get_mcp_server", return_value=DummyMCPServer()):
         with patch("app.core.config.settings") as s:
+            s.AUTH_MODE = "api_key"
             s.API_KEY_ENABLED = True
             s.API_KEY = "secret"
 

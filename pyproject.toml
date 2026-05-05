@@ -16,6 +16,8 @@ dependencies = [
   "fastapi>=0.115,<1",
   "uvicorn>=0.30,<1",
   "aiohttp>=3.9,<4",
+  "supabase>=2,<3",
+  "PyJWT>=2.8,<3",
 ]
 
 [project.optional-dependencies]

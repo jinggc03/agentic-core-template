@@ -5,7 +5,8 @@ from pydantic import BaseModel
 from typing import List, Dict, Any
 
 from app.mcp.tool_registry import get_mcp_server
-from app.api.deps import require_api_key
+from app.api.deps import get_auth_context
+from app.auth.context import AuthContext
 
 router = APIRouter()
 
@@ -26,7 +27,7 @@ class MCPToolCallRequest(BaseModel):
 
 
 @router.get("/info", tags=["mcp"])
-async def mcp_info():
+async def mcp_info(auth_context: AuthContext = Depends(get_auth_context)):
     """Get MCP server info.
     
     Returns:
@@ -37,7 +38,7 @@ async def mcp_info():
 
 
 @router.get("/tools", tags=["mcp"])
-async def list_mcp_tools():
+async def list_mcp_tools(auth_context: AuthContext = Depends(get_auth_context)):
     """List available MCP tools.
     
     Returns:
@@ -49,7 +50,7 @@ async def list_mcp_tools():
 
 
 @router.get("/resources", tags=["mcp"])
-async def list_mcp_resources():
+async def list_mcp_resources(auth_context: AuthContext = Depends(get_auth_context)):
     """List available MCP resources.
     
     Returns:
@@ -61,7 +62,10 @@ async def list_mcp_resources():
 
 
 @router.post("/tools/call", tags=["mcp"])
-async def call_mcp_tool(request: MCPToolCallRequest, _: str = Depends(require_api_key)):
+async def call_mcp_tool(
+    request: MCPToolCallRequest,
+    auth_context: AuthContext = Depends(get_auth_context),
+):
     """Call an MCP tool.
     
     Args:

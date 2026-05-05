@@ -41,6 +41,9 @@ class TestLayeredConfiguration:
         settings = Settings(OPENROUTER_API_KEY="")
         assert settings.OPENROUTER_API_KEY == ""
 
+        settings = Settings(DEEPSEEK_API_KEY="  sk-deepseek-xxx  ")
+        assert settings.DEEPSEEK_API_KEY == "sk-deepseek-xxx"
+
 
 class TestEnvironmentValidation:
     """Test environment-specific validation."""

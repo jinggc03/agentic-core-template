@@ -65,16 +65,33 @@ System environment variables ← highest priority
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `LLM_PROVIDER` | `openrouter` | Provider name |
+| `LLM_PROVIDER` | `openrouter` | Provider name: `openrouter`, `openai`, or `deepseek` |
 | `LLM_MODEL` | `meta-llama/llama-3.1-8b-instruct` | Model slug |
 | `OPENROUTER_API_KEY` | — | API key (never commit) |
+| `OPENAI_API_KEY` | — | API key (never commit) |
+| `DEEPSEEK_API_KEY` | — | API key (never commit) |
+
+### RAG / Embeddings
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `RAG_ENABLED` | `false` | Enable RAG knowledge layer |
+| `RAG_BACKEND` | `supabase` | Backend name: `supabase` or `memory` |
+| `RAG_CHUNK_SIZE_CHARS` | `1200` | Maximum text chunk size |
+| `RAG_CHUNK_OVERLAP_CHARS` | `200` | Text chunk overlap |
+| `EMBEDDING_PROVIDER` | `openai` | Embedding provider |
+| `EMBEDDING_MODEL` | `text-embedding-3-small` | Embedding model slug |
+| `EMBEDDING_DIMENSIONS` | `1536` | Embedding vector dimensions |
+| `EMBEDDING_API_KEY` | — | Embedding API key fallback (never commit) |
 
 ### Security
 
 | Variable | Default | Description |
 |----------|---------|-------------|
+| `AUTH_MODE` | `off` | Canonical auth mode: `off`, `api_key`, or `supabase_auth`; `off` is invalid in prod |
 | `API_KEY` | `""` | Key required on POST /api/agents/*, /api/mcp/* |
-| `API_KEY_ENABLED` | `false` | Set `true` to enforce the key |
+| `API_KEY_ENABLED` | `false` | Legacy compatibility flag; prefer `AUTH_MODE=api_key` |
+| `SUPABASE_JWT_SECRET` | — | Supabase Auth JWT secret required when `AUTH_MODE=supabase_auth` |
 | `CORS_ALLOWED_ORIGINS` | `http://localhost:3000,...` | Comma-separated origin list — never use `*` |
 | `TELEGRAM_ALLOWED_USER_IDS` | `""` | Comma-separated Telegram user IDs; empty = allow all |
 | `ALLOWED_HOSTS` | `localhost,127.0.0.1` | Trusted host enforcement for Host header |
@@ -108,6 +125,8 @@ System environment variables ← highest priority
 | `SUPABASE_URL` | — | Supabase project URL |
 | `SUPABASE_ANON_KEY` | — | Supabase anon key (never commit) |
 | `SUPABASE_SERVICE_ROLE_KEY` | — | Supabase service key (never commit) |
+| `SUPABASE_DB_URL` | — | Supabase/Postgres connection string (never commit) |
+| `EMBEDDING_API_KEY` | — | Embedding API key fallback (never commit) |
 
 ---
 
@@ -134,8 +153,12 @@ Production config (`APP_ENV=prod`) raises a `ValueError` on startup if required 
 def _validate_prod(self) -> "Settings":
     if self.APP_ENV == "prod":
         errors = []
-        if self.API_KEY_ENABLED and not self.API_KEY:
-            errors.append("API_KEY must be set when API_KEY_ENABLED=true")
+        if self.AUTH_MODE == "off":
+            errors.append("AUTH_MODE=off is not allowed in production")
+        if self.AUTH_MODE == "api_key" and not self.API_KEY:
+            errors.append("API_KEY must be set when AUTH_MODE=api_key in production")
+        if self.AUTH_MODE == "supabase_auth" and not self.SUPABASE_JWT_SECRET:
+            errors.append("SUPABASE_JWT_SECRET must be set when AUTH_MODE=supabase_auth")
         # ... add more prod checks here
         if errors:
             raise ValueError("Production config errors: " + "; ".join(errors))

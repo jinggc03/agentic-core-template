@@ -7,7 +7,8 @@ from typing import Optional, Dict, Any
 from app.agents.registry import get_registry
 from app.agents.base import ConfiguredAgent, AgentRunner
 from app.agents.base.types import TurnResult
-from app.api.deps import require_api_key
+from app.api.deps import get_auth_context
+from app.auth.context import AuthContext
 from app.core.logging import get_logger
 
 logger = get_logger(__name__)
@@ -60,7 +61,10 @@ class AgentContextResponse(BaseModel):
 
 
 @router.post("/run", response_model=AgentRunResponse, tags=["agent"])
-async def run_agent(request: AgentRunRequest, _: str = Depends(require_api_key)):
+async def run_agent(
+    request: AgentRunRequest,
+    auth_context: AuthContext = Depends(get_auth_context),
+):
     """Run an agent turn (ADK-aligned turn execution).
     
     Executes:
@@ -88,7 +92,7 @@ async def run_agent(request: AgentRunRequest, _: str = Depends(require_api_key))
         if not isinstance(agent, ConfiguredAgent):
             raise TypeError(f"Agent {request.agent_id} is not a ConfiguredAgent")
         
-        runner = AgentRunner(agent)
+        runner = AgentRunner(agent, auth_context=auth_context)
         turn_result: TurnResult = await runner.run_turn(request.input)
         
         logger.info(
@@ -122,7 +126,7 @@ async def run_agent(request: AgentRunRequest, _: str = Depends(require_api_key))
 async def run_agent_by_id(
     agent_id: str,
     request: AgentRunByIdRequest,
-    _: str = Depends(require_api_key),
+    auth_context: AuthContext = Depends(get_auth_context),
 ):
     """Run a turn for a specific agent ID provided in the URL path."""
     return await run_agent(
@@ -132,12 +136,12 @@ async def run_agent_by_id(
             conversation_id=request.conversation_id,
             system_prompt=request.system_prompt,
         ),
-        _,
+        auth_context,
     )
 
 
 @router.get("", tags=["agent"])
-async def list_agents():
+async def list_agents(auth_context: AuthContext = Depends(get_auth_context)):
     """List available agents.
     
     Returns:
@@ -152,7 +156,10 @@ async def list_agents():
 
 
 @router.get("/{agent_id}", response_model=AgentInfoResponse, tags=["agent"])
-async def get_agent_info(agent_id: str):
+async def get_agent_info(
+    agent_id: str,
+    auth_context: AuthContext = Depends(get_auth_context),
+):
     """Get agent information.
     
     Args:
@@ -173,7 +180,10 @@ async def get_agent_info(agent_id: str):
 
 
 @router.get("/{agent_id}/context", response_model=AgentContextResponse, tags=["agent"])
-async def get_agent_context(agent_id: str):
+async def get_agent_context(
+    agent_id: str,
+    auth_context: AuthContext = Depends(get_auth_context),
+):
     """Get agent context/state.
     
     Returns current agent context if available.
@@ -217,7 +227,10 @@ async def get_agent_context(agent_id: str):
 
 
 @router.post("/{agent_id}/reset", tags=["agent"])
-async def reset_agent(agent_id: str, _: str = Depends(require_api_key)):
+async def reset_agent(
+    agent_id: str,
+    auth_context: AuthContext = Depends(get_auth_context),
+):
     """Reset agent state.
     
     Clears message history and resets all state.

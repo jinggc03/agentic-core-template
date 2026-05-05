@@ -1,9 +1,20 @@
 """Agent runner - orchestrates agent execution."""
 
 from typing import Optional
+from uuid import uuid4
+
 from app.agents.base.configured_agent import ConfiguredAgent
 from app.agents.base.types import TurnResult
+from app.auth.context import AuthContext
 from app.core.logging import get_logger
+from app.repositories import (
+    AgentStateRecord,
+    ConversationRecord,
+    MessageRecord,
+    RepositoryBundle,
+    get_repository_bundle,
+)
+from app.services.audit import AuditService
 
 logger = get_logger(__name__)
 
@@ -19,15 +30,32 @@ class AgentRunner:
     - Maintaining execution state
     """
     
-    def __init__(self, agent: ConfiguredAgent):
+    def __init__(
+        self,
+        agent: ConfiguredAgent,
+        repositories: Optional[RepositoryBundle] = None,
+        persist_turns: bool = False,
+        audit_service: Optional[AuditService] = None,
+        auth_context: Optional[AuthContext] = None,
+    ):
         """Initialize runner with an agent.
         
         Args:
             agent: ConfiguredAgent instance
+            repositories: Optional persistence repositories
+            persist_turns: Whether to persist conversations, messages, and state
+            audit_service: Optional audit event service
+            auth_context: Optional request auth context
         """
         self.agent = agent
+        self.auth_context = auth_context
+        if auth_context is not None:
+            self.agent.auth_context = auth_context
         self.running = False
         self.turn_results = []
+        self.persist_turns = persist_turns
+        self.repositories = repositories
+        self.audit_service = audit_service
 
     async def run_turn(self, user_input: str) -> TurnResult:
         """Execute a single turn.
@@ -42,10 +70,119 @@ class AgentRunner:
             self.running = True
         
         logger.debug(f"Runner executing turn for {self.agent.agent_id}")
+        self._record_audit_turn_started()
         result = await self.agent.run_turn(user_input)
         self.turn_results.append(result)
+        self._persist_turn(user_input, result)
+        self._record_audit_turn_completed(result)
         
         return result
+
+    def _get_repositories(self) -> Optional[RepositoryBundle]:
+        if self.repositories is not None:
+            return self.repositories
+        if self.persist_turns:
+            self.repositories = get_repository_bundle()
+            return self.repositories
+        return None
+
+    def _persist_turn(self, user_input: str, result: TurnResult) -> None:
+        repositories = self._get_repositories()
+        if repositories is None:
+            return
+
+        try:
+            conversation_id = self.agent.conversation_id
+            if repositories.conversations.get_conversation(conversation_id) is None:
+                repositories.conversations.create_conversation(
+                    ConversationRecord(
+                        id=conversation_id,
+                        agent_id=self.agent.agent_id,
+                        user_id=self.auth_context.actor_id if self.auth_context else None,
+                        metadata={"agent_name": self.agent.name},
+                    )
+                )
+
+            turn_index = max(len(self.turn_results) - 1, 0)
+            repositories.messages.add_message(
+                MessageRecord(
+                    id=str(uuid4()),
+                    conversation_id=conversation_id,
+                    role="user",
+                    content=user_input,
+                    metadata={
+                        "turn_index": turn_index,
+                        "actor_id": self.auth_context.actor_id if self.auth_context else None,
+                    },
+                )
+            )
+            repositories.messages.add_message(
+                MessageRecord(
+                    id=str(uuid4()),
+                    conversation_id=conversation_id,
+                    role="assistant" if result.success else "error",
+                    content=result.output if result.success else (result.error or ""),
+                    metadata={
+                        "turn_index": turn_index,
+                        "success": result.success,
+                        "model_calls": result.model_calls,
+                        "tool_calls": result.tool_calls,
+                        "execution_time_ms": result.execution_time_ms,
+                        "actor_id": self.auth_context.actor_id if self.auth_context else None,
+                    },
+                )
+            )
+
+            snapshot = (
+                self.agent.snapshot.model_dump(mode="json")
+                if self.agent.snapshot
+                else None
+            )
+            repositories.agent_states.save_state(
+                AgentStateRecord(
+                    id=f"{self.agent.agent_id}:{conversation_id}",
+                    agent_id=self.agent.agent_id,
+                    conversation_id=conversation_id,
+                    state={
+                        "turn_count": self.agent.turn_count,
+                        "last_turn_success": result.success,
+                    },
+                    snapshot=snapshot,
+                    version=self.agent.turn_count,
+                )
+            )
+        except Exception as exc:
+            logger.warning(
+                "Failed to persist turn for %s/%s: %s",
+                self.agent.agent_id,
+                self.agent.conversation_id,
+                exc,
+            )
+
+    def _record_audit_turn_started(self) -> None:
+        if self.audit_service is None:
+            return
+        try:
+            self.audit_service.agent_turn_started(
+                agent_id=self.agent.agent_id,
+                conversation_id=self.agent.conversation_id,
+            )
+        except Exception as exc:
+            logger.warning("Failed to record audit start event: %s", exc)
+
+    def _record_audit_turn_completed(self, result: TurnResult) -> None:
+        if self.audit_service is None:
+            return
+        try:
+            self.audit_service.agent_turn_completed(
+                agent_id=self.agent.agent_id,
+                conversation_id=self.agent.conversation_id,
+                success=result.success,
+                execution_time_ms=result.execution_time_ms,
+                error=result.error,
+            )
+        except Exception as exc:
+            logger.warning("Failed to record audit completion event: %s", exc)
 
     def run(self, user_input: str) -> str:
         """Synchronous turn execution.

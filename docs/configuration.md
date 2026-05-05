@@ -61,6 +61,7 @@ limits:
 app:
   debug: false
 security:
+  auth_mode: api_key
   api_key_enabled: true
 cors:
   allowed_origins: https://staging.example.com
@@ -70,6 +71,7 @@ app:
   debug: false
   log_level: WARNING
 security:
+  auth_mode: api_key
   api_key_enabled: true
 limits:
   agent_timeout_seconds: 30
@@ -175,10 +177,24 @@ Example output:
 
 | Variable | Type | Default | Description |
 |----------|------|---------|-------------|
-| `LLM_PROVIDER` | openrouter/openai | openrouter | Which LLM provider to use |
+| `LLM_PROVIDER` | openrouter/openai/deepseek | openrouter | Which LLM provider to use |
 | `LLM_MODEL` | string | meta-llama/llama-3.1-70b-instruct | Model identifier |
 | `OPENROUTER_API_KEY` | string | (empty) | OpenRouter API key |
 | `OPENAI_API_KEY` | string | (empty) | OpenAI API key |
+| `DEEPSEEK_API_KEY` | string | (empty) | DeepSeek API key |
+
+### RAG / Knowledge Layer
+
+| Variable | Type | Default | Description |
+|----------|------|---------|-------------|
+| `RAG_ENABLED` | bool | false | Enable RAG knowledge layer |
+| `RAG_BACKEND` | memory/supabase | supabase | Vector backend for RAG |
+| `RAG_CHUNK_SIZE_CHARS` | int | 1200 | Maximum characters per text chunk |
+| `RAG_CHUNK_OVERLAP_CHARS` | int | 200 | Overlapping characters between chunks |
+| `EMBEDDING_PROVIDER` | openai | openai | Embedding provider |
+| `EMBEDDING_MODEL` | string | text-embedding-3-small | Embedding model |
+| `EMBEDDING_DIMENSIONS` | int | 1536 | Embedding vector dimensions |
+| `EMBEDDING_API_KEY` | string | (empty) | Optional embedding API key fallback |
 
 ### Integrations (Optional)
 
@@ -198,7 +214,9 @@ Example output:
 | `SUPABASE_URL` | string | (empty) | Supabase project URL |
 | `SUPABASE_ANON_KEY` | string | (empty) | Supabase public key |
 | `SUPABASE_SERVICE_ROLE_KEY` | string | (empty) | Supabase service role key |
-| `DATABASE_URL` | string | (empty) | Generic database connection string |
+| `SUPABASE_DB_URL` | string | (empty) | Supabase/Postgres connection string |
+
+Supabase is optional and disabled by default. When enabled, repository selection uses Supabase-backed repositories for conversations, messages, snapshots, skill runs, audit events, and file metadata. See [standards/supabase-integration-guide.md](standards/supabase-integration-guide.md).
 
 ### MCP (Model Context Protocol)
 
@@ -219,7 +237,11 @@ Example output:
 
 | Variable | Type | Default | Description |
 |----------|------|---------|-------------|
+| `AUTH_MODE` | off/api_key/supabase_auth | off | Canonical FastAPI authentication mode; `off` is invalid in production |
 | `SECRET_KEY` | string | dev-insecure-key | Signing key (must change in production) |
+| `API_KEY` | string | (empty) | Required when `AUTH_MODE=api_key` |
+| `API_KEY_ENABLED` | bool | false | Legacy compatibility flag; prefer `AUTH_MODE` |
+| `SUPABASE_JWT_SECRET` | string | (empty) | Required when `AUTH_MODE=supabase_auth` |
 | `ALLOWED_HOSTS` | string | localhost,127.0.0.1 | Comma-separated allowed hosts |
 
 ## Environment-Specific Behavior
@@ -230,13 +252,13 @@ Example output:
 - ✅ Auto-reload enabled
 - ✅ Flexible secret requirements
 - ✅ Verbose logging (DEBUG level)
-- ✅ API keys optional (can use test mode)
+- ✅ `AUTH_MODE=off` allowed for local development
 
 ### Pre-production (APP_ENV=pre)
 
 - ✅ Debug disabled
 - ✅ Auto-reload disabled
-- ⚠️ API keys should be configured
+- ⚠️ `AUTH_MODE=api_key` or `AUTH_MODE=supabase_auth` should be configured
 - ✅ Standard logging (INFO level)
 - ✅ Tests all integrations but with more flexibility than prod
 
@@ -244,7 +266,9 @@ Example output:
 
 - ❌ Debug mode disabled (enforced)
 - ❌ Auto-reload disabled (enforced)
-- ❌ All API keys required
+- ❌ `AUTH_MODE=off` is rejected
+- ❌ `API_KEY` is required when `AUTH_MODE=api_key`
+- ❌ `SUPABASE_JWT_SECRET` is required when `AUTH_MODE=supabase_auth`
 - ✅ Conservative logging (WARNING level)
 - ✅ Secrets must come from environment variables
 - ✅ Strict validation on startup

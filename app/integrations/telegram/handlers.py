@@ -1,6 +1,8 @@
 """Telegram message handlers."""
 
-from typing import Dict, Any
+from typing import Optional
+
+from app.auth.context import AuthContext
 from app.core.logging import get_logger
 from app.agents.registry import get_registry
 from app.agents.base import AgentRunner
@@ -16,7 +18,11 @@ class TelegramHandler:
         self.agent_registry = get_registry()
 
     async def handle_message(
-        self, chat_id: str, message_text: str, agent_id: str = "default"
+        self,
+        chat_id: str,
+        message_text: str,
+        agent_id: str = "default",
+        auth_context: Optional[AuthContext] = None,
     ) -> str:
         """Handle incoming Telegram message.
         
@@ -24,13 +30,16 @@ class TelegramHandler:
             chat_id: Chat ID
             message_text: Message text
             agent_id: Agent to use for response
+            auth_context: Optional request auth context
             
         Returns:
             Response message
         """
         try:
             agent = self.agent_registry.instantiate(agent_id)
-            turn_result = await AgentRunner(agent).run_turn(message_text)
+            turn_result = await AgentRunner(agent, auth_context=auth_context).run_turn(
+                message_text
+            )
             if not turn_result.success:
                 error_msg = turn_result.error or "Agent turn failed"
                 logger.warning(f"Agent {agent_id} failed Telegram turn: {error_msg}")
