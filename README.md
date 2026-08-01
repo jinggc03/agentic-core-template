@@ -7,11 +7,26 @@
 ![MIT License](https://img.shields.io/badge/license-MIT-green)
 ![v0.4](https://img.shields.io/badge/status-v0.4-orange)
 
-A reusable technical foundation for building structured, secure, and extensible AI agents with ADK-first architecture.
+A reusable backend foundation for building structured, secure, and extensible AI agents with an ADK-first architecture.
 
-`agentic-core-template` is a backend template for creating AI agents with good practices from the start: clear runtime boundaries, portable skills, provider abstraction, MCP exposure, FastAPI endpoints, Telegram integration, environment-based configuration, and security guardrails.
+`agentic-core-template` is a technical template, not a finished business product. It gives a new project a FastAPI service, an agent runtime, security boundaries, provider adapters, portable skills, and optional Supabase infrastructure. The product-specific workflow, business tools, user experience, and production operations still have to be built for each project.
 
 Author: Jing
+
+## Read This First: What This Template Is
+
+The intended outcome is a strong starting point for a new agent-backed application, not a complete application that delivers a business outcome immediately after cloning.
+
+| Question | Current answer |
+|----------|----------------|
+| Can the API run locally? | Yes. `make run-api` starts the FastAPI application. |
+| Is there a real agent execution path? | Yes. Agents run through `ConfiguredAgent` and `AgentRunner`, with policy and loop protection. |
+| Is Supabase supported? | Yes. Persistence, Auth, Storage, RLS, and pgvector adapters are included as optional infrastructure. |
+| Is Supabase enabled and provisioned automatically? | No. It is disabled by default and still requires project configuration, secrets, migrations, and product-specific policies. |
+| Is there a complete business workflow out of the box? | No. `examples/invoice_agent/` is a reference implementation, not a finished invoice product. |
+| Is the standalone agent or MCP CLI ready? | No. `make run-agent` and `make run-mcp` are placeholders. The HTTP API and MCP-style routes are available. |
+
+In short: this repository is technically actionable as a foundation, but not yet product-actionable on its own. To create a useful product, choose a domain and add the corresponding agent behavior, tools, data model, client, and deployment configuration.
 
 ## Why This Exists
 
@@ -27,7 +42,7 @@ It addresses common problems:
 - Direct LLM calls from routes or handlers
 - Hard-to-test integrations such as MCP and Telegram
 
-## What It Provides
+## What Is Already Implemented
 
 - ADK-first runtime built around `ConfiguredAgent` and `AgentRunner`
 - FastAPI API layer for health checks, agent execution, MCP, and Telegram
@@ -40,6 +55,20 @@ It addresses common problems:
 - Layered configuration with `.env` secrets and versioned `params/` YAML
 - Security guardrails for API keys, CORS, host validation, safe logging, and limits
 - Integration tests, architecture docs, standards, and audit reports
+
+## What You Still Need to Build
+
+This template intentionally does not decide the product for you. A cloned project still needs:
+
+- A concrete business use case and success criteria
+- One or more domain agents with product-specific prompts, context, routing, and evaluations
+- Business skills and tools, including production-grade MCP tools where appropriate
+- Product-specific Supabase tables, ownership rules, RLS policies, migrations, and seed data
+- A client or user-facing workflow, such as a web app, mobile app, or operational integration
+- Production deployment, secrets management, observability, retries, rate limits, and runbooks
+- Domain-specific security, privacy, retention, and compliance decisions
+
+The template provides the seams for these decisions; it does not make them automatically.
 
 ## Architecture
 
@@ -65,6 +94,8 @@ Main boundaries:
 
 ## Quickstart
 
+This quickstart proves that the technical foundation starts locally. It does not create a business-ready agent or provision Supabase.
+
 ```bash
 make install-dev
 cp .env.example .env
@@ -80,6 +111,16 @@ Useful checks:
 curl http://localhost:8000/api/health/health
 make test
 ```
+
+To execute an agent against a real LLM, configure one supported provider key in `.env` and select the provider through `LLM_PROVIDER`. Without a provider key, the health surface and tests can still be used, but a real model-backed turn cannot complete.
+
+The first product-building steps after this quickstart are:
+
+1. Choose a concrete domain workflow.
+2. Create an agent under `app/agents/<agent_name>/`.
+3. Add and test the skills and tools required by that workflow.
+4. Decide whether in-memory repositories are enough or configure Supabase persistence.
+5. Add the client, deployment configuration, observability, and domain-specific security controls.
 
 Current smoke-tested behavior:
 
@@ -206,7 +247,7 @@ Relevant endpoints:
 
 ### MCP
 
-The MCP layer exposes registered tools and resources through HTTP endpoints.
+The MCP layer exposes registered tools and resources through HTTP endpoints. The transport and registry are present, but the template does not ship with a substantial set of production business tools. Add domain-specific tools in the cloned project.
 
 Relevant endpoints:
 
@@ -227,12 +268,12 @@ Implemented RAG support:
 - Supabase pgvector repository for durable vector search
 - Versioned pgvector migration and `match_knowledge_chunks` RPC
 
-RAG is disabled by default. To enable it locally with the in-memory fallback:
+RAG is disabled by default. To enable it locally without a Supabase project, select the in-memory backend:
 
 ```yaml
 rag:
   enabled: true
-  backend: supabase
+  backend: memory
 ```
 
 Set either `EMBEDDING_API_KEY` or `OPENAI_API_KEY` in `.env`.
@@ -241,7 +282,7 @@ For setup and usage, see [docs/standards/rag-integration-guide.md](docs/standard
 
 ### Supabase
 
-Supabase is integrated as optional infrastructure and remains disabled by default.
+Supabase is integrated as optional infrastructure and remains disabled by default. This means the repository is Supabase-ready, not Supabase-provisioned: cloning the repository does not create a Supabase project, configure secrets, apply migrations, or establish the authorization model for a specific product.
 
 Implemented Supabase support:
 
@@ -264,6 +305,8 @@ make supabase-stop
 ```
 
 Supabase remains infrastructure, not agent logic. Agents, skills, API routes, Telegram handlers, and MCP handlers should use repository interfaces or integration services instead of importing the Supabase SDK directly.
+
+For a real product, review every baseline RLS policy and adapt it to the product's ownership, tenant, and role model. The included policies are a starting point, not a universal authorization design.
 
 For setup and security guidance, see [docs/standards/supabase-integration-guide.md](docs/standards/supabase-integration-guide.md).
 
@@ -382,13 +425,19 @@ make supabase-stop
 
 ## Project Status
 
-This repository is a v0.4 technical template: usable, structured, and tested, with optional Supabase persistence infrastructure, but not production-battle-tested.
+This repository is a v0.4 technical template: the foundation is usable and structured, and the optional Supabase persistence layer is implemented. It is not a finished product, a complete SaaS starter, or production-battle-tested.
 
-It is intended as a strong starting point, not a finished product. Before production use, review deployment security, observability, persistence, operational runbooks, and the specific risks of your agent domain.
+The current maturity can be summarized as:
+
+- **Foundation:** implemented. FastAPI, agent execution, provider abstraction, skills, security guardrails, repositories, and tests are present.
+- **Integration readiness:** implemented but opt-in. Supabase, Telegram, MCP, and RAG require configuration and product decisions.
+- **Business actionability:** not included. There is no default domain workflow or production business toolset.
+- **Production readiness:** not claimed. Review deployment security, observability, persistence, operational runbooks, and the specific risks of the agent domain before deployment.
 
 Known template-level follow-up:
 
 - Add production-grade MCP business tools
+- Add a documented, automated clone/setup path for the chosen Supabase deployment model
 - Decide the removal timeline for deprecated `BaseAgent`
 - Complete or trim unused future-facing areas such as `TurnMode.AGENTIC`, `TurnMode.STREAMING`, and partial snapshots
 - Add observability and production telemetry when there is a concrete deployment target
